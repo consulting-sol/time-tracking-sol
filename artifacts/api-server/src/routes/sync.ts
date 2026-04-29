@@ -6,8 +6,6 @@ import { createClerkClient } from "@clerk/express";
 
 const router = Router();
 
-// Auto-sync a Clerk user into the local users table when they hit /api/users/me
-// This also handles the case where a user is not yet in our DB but is authenticated in Clerk
 router.post("/users/sync", async (req, res): Promise<void> => {
   const auth = getAuth(req);
   const userId = auth?.userId;
@@ -34,6 +32,27 @@ router.post("/users/sync", async (req, res): Promise<void> => {
 
   if (!primaryEmail) {
     res.status(400).json({ error: "No email found for user" });
+    return;
+  }
+
+  // If a record already exists with this email (e.g. a placeholder from initial setup),
+  // update it to use the real Clerk ID rather than inserting a duplicate.
+  const existingByEmail = await db.query.usersTable.findFirst({
+    where: eq(usersTable.email, primaryEmail),
+  });
+
+  if (existingByEmail) {
+    const [updated] = await db
+      .update(usersTable)
+      .set({
+        clerkId: userId,
+        firstName: clerkUser.firstName ?? existingByEmail.firstName,
+        lastName: clerkUser.lastName ?? existingByEmail.lastName,
+      })
+      .where(eq(usersTable.email, primaryEmail))
+      .returning();
+
+    res.json({ synced: true, user: updated });
     return;
   }
 
