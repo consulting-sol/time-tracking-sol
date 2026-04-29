@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -6,6 +7,7 @@ import { Label } from "@/components/ui/label";
 
 export function LoginPage() {
   const { login, setPassword } = useAuth();
+  const [, setLocation] = useLocation();
   const [email, setEmail] = useState("");
   const [password, setPassword_] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -20,6 +22,7 @@ export function LoginPage() {
     setLoading(true);
     try {
       await login(email, password);
+      setLocation("/dashboard");
     } catch (err: any) {
       if (err?.code === "no_password") {
         setMode("set-password");
@@ -45,6 +48,7 @@ export function LoginPage() {
     setLoading(true);
     try {
       await setPassword(email, newPassword);
+      setLocation("/dashboard");
     } catch (err: any) {
       setError(err?.message ?? "Failed to set password");
     } finally {
