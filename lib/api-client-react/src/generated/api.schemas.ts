@@ -108,10 +108,12 @@ export const InviteUserBodyRole = {
 
 export interface InviteUserBody {
   email: string;
-  firstName?: string;
-  lastName?: string;
   role: InviteUserBodyRole;
-  password: string;
+}
+
+export interface InviteResponse {
+  invited: boolean;
+  email: string;
 }
 
 export type UpdateUserBodyRole =

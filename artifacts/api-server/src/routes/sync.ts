@@ -38,13 +38,19 @@ router.post("/users/sync", async (req, res): Promise<void> => {
   }
 
   const isFirstUser = (await db.select().from(usersTable)).length === 0;
+  const metadataRole = (clerkUser.publicMetadata as Record<string, unknown>)?.role;
+  const role = isFirstUser
+    ? "admin"
+    : metadataRole === "admin" || metadataRole === "consultant"
+      ? (metadataRole as "admin" | "consultant")
+      : "consultant";
 
   const [user] = await db.insert(usersTable).values({
     clerkId: userId,
     email: primaryEmail,
     firstName: clerkUser.firstName ?? null,
     lastName: clerkUser.lastName ?? null,
-    role: isFirstUser ? "admin" : "consultant",
+    role,
   }).returning();
 
   res.json({ synced: true, user });

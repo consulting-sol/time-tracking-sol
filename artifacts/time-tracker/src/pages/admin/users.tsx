@@ -34,10 +34,7 @@ import { Badge } from "@/components/ui/badge";
 
 const inviteSchema = z.object({
   email: z.string().email("Invalid email address"),
-  firstName: z.string().optional(),
-  lastName: z.string().optional(),
   role: z.enum(["admin", "consultant"]),
-  password: z.string().min(8, "Password must be at least 8 characters"),
 });
 
 type InviteFormValues = z.infer<typeof inviteSchema>;
@@ -53,25 +50,22 @@ export function AdminUsersPage() {
     resolver: zodResolver(inviteSchema),
     defaultValues: {
       email: "",
-      firstName: "",
-      lastName: "",
       role: "consultant",
-      password: "",
     },
   });
 
   const inviteMutation = useInviteUser({
     mutation: {
       onSuccess: () => {
-        toast({ title: "User created successfully" });
+        toast({ title: "Invitation sent", description: "They will receive an email to set up their account." });
         queryClient.invalidateQueries({ queryKey: getListUsersQueryKey() });
         setIsInviteOpen(false);
         form.reset();
       },
       onError: (err: any) => {
         toast({ 
-          title: "Failed to create user", 
-          description: err?.message || "There was an error creating the user.",
+          title: "Failed to send invitation", 
+          description: err?.message || "There was an error sending the invitation.",
           variant: "destructive" 
         });
       }
@@ -211,67 +205,24 @@ export function AdminUsersPage() {
       </main>
 
       <Dialog open={isInviteOpen} onOpenChange={setIsInviteOpen}>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent className="sm:max-w-[400px]">
           <DialogHeader>
-            <DialogTitle>Add Team Member</DialogTitle>
+            <DialogTitle>Invite Team Member</DialogTitle>
             <DialogDescription>
-              Create a new account for a consultant or administrator.
+              They will receive an email with a link to set up their password and access the app.
             </DialogDescription>
           </DialogHeader>
           
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onInviteSubmit)} className="space-y-4 py-4">
-              <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="firstName"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>First Name</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Jane" {...field} data-testid="input-user-firstname" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="lastName"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Last Name</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Doe" {...field} data-testid="input-user-lastname" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
               <FormField
                 control={form.control}
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Email Address *</FormLabel>
+                    <FormLabel>Email Address</FormLabel>
                     <FormControl>
                       <Input type="email" placeholder="jane@example.com" {...field} data-testid="input-user-email" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="password"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Initial Password *</FormLabel>
-                    <FormControl>
-                      <Input type="password" placeholder="At least 8 characters" {...field} data-testid="input-user-password" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -305,7 +256,7 @@ export function AdminUsersPage() {
                   Cancel
                 </Button>
                 <Button type="submit" disabled={inviteMutation.isPending} data-testid="btn-submit-user">
-                  {inviteMutation.isPending ? "Creating..." : "Create User"}
+                  {inviteMutation.isPending ? "Sending..." : "Send Invitation"}
                 </Button>
               </div>
             </form>

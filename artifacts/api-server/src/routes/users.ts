@@ -52,38 +52,29 @@ router.post("/users", requireAdmin, async (req, res): Promise<void> => {
     return;
   }
 
-  const { email, firstName, lastName, role, password } = body.data;
+  const { email, role } = body.data;
+
+  const origin = process.env.REPLIT_DOMAINS
+    ? `https://${process.env.REPLIT_DOMAINS.split(",")[0]}`
+    : (req.headers.origin ?? "http://localhost:80");
+  const redirectUrl = `${origin}/sign-up`;
 
   const clerkClient = getClerkClient();
 
-  let clerkUser;
   try {
-    clerkUser = await clerkClient.users.createUser({
-      emailAddress: [email],
-      password,
-      firstName: firstName ?? undefined,
-      lastName: lastName ?? undefined,
+    await clerkClient.invitations.createInvitation({
+      emailAddress: email,
+      redirectUrl,
+      publicMetadata: { role },
     });
   } catch (err: unknown) {
-    req.log.error({ err }, "Failed to create Clerk user");
-    const errMsg = err instanceof Error ? err.message : "Failed to create user";
+    req.log.error({ err }, "Failed to send Clerk invitation");
+    const errMsg = err instanceof Error ? err.message : "Failed to send invitation";
     res.status(400).json({ error: errMsg });
     return;
   }
 
-  const [user] = await db.insert(usersTable).values({
-    clerkId: clerkUser.id,
-    email,
-    firstName: firstName ?? null,
-    lastName: lastName ?? null,
-    role,
-  }).returning();
-
-  res.status(201).json({
-    ...user,
-    displayName: getDisplayName(user.firstName, user.lastName, user.email),
-    totalHours: null,
-  });
+  res.status(201).json({ invited: true, email });
 });
 
 router.get("/users/:clerkId", requireAdmin, async (req, res): Promise<void> => {

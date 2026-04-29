@@ -27,6 +27,7 @@ import type {
   GetTimeByProjectParams,
   GetTimeByUserParams,
   HealthStatus,
+  InviteResponse,
   InviteUserBody,
   ListProjectsParams,
   ListTimeEntriesParams,
@@ -1483,7 +1484,7 @@ export function useListUsers<
 }
 
 /**
- * @summary Invite a new user (admin only)
+ * @summary Invite a new user via email (admin only)
  */
 export const getInviteUserUrl = () => {
   return `/api/users`;
@@ -1492,8 +1493,8 @@ export const getInviteUserUrl = () => {
 export const inviteUser = async (
   inviteUserBody: InviteUserBody,
   options?: RequestInit,
-): Promise<User> => {
-  return customFetch<User>(getInviteUserUrl(), {
+): Promise<InviteResponse> => {
+  return customFetch<InviteResponse>(getInviteUserUrl(), {
     ...options,
     method: "POST",
     headers: { "Content-Type": "application/json", ...options?.headers },
@@ -1546,7 +1547,7 @@ export type InviteUserMutationBody = BodyType<InviteUserBody>;
 export type InviteUserMutationError = ErrorType<unknown>;
 
 /**
- * @summary Invite a new user (admin only)
+ * @summary Invite a new user via email (admin only)
  */
 export const useInviteUser = <
   TError = ErrorType<unknown>,

@@ -336,7 +336,7 @@ paths:
     post:
       operationId: inviteUser
       tags: [users]
-      summary: Invite a new user (admin only)
+      summary: Invite a new user via email (admin only)
       requestBody:
         required: true
         content:
@@ -345,11 +345,11 @@ paths:
               $ref: "#/components/schemas/InviteUserBody"
       responses:
         "201":
-          description: Invited user
+          description: Invitation sent
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/User"
+                $ref: "#/components/schemas/InviteResponse"
 
   /users/me:
     get:
@@ -734,19 +734,23 @@ components:
       properties:
         email:
           type: string
-        firstName:
-          type: string
-        lastName:
-          type: string
         role:
           type: string
           enum: [admin, consultant]
-        password:
-          type: string
       required:
         - email
         - role
-        - password
+
+    InviteResponse:
+      type: object
+      properties:
+        invited:
+          type: boolean
+        email:
+          type: string
+      required:
+        - invited
+        - email
 
     UpdateUserBody:
       type: object

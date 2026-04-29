@@ -82,6 +82,14 @@ function SignInPage() {
 }
 
 function SignUpPage() {
+  const [, setLocation] = useLocation();
+  const hasTicket = new URLSearchParams(window.location.search).has("__clerk_ticket");
+
+  if (!hasTicket) {
+    setLocation("/sign-in");
+    return null;
+  }
+
   return (
     <div className="flex min-h-[100dvh] items-center justify-center bg-background px-4">
       <SignUp routing="path" path={`${basePath}/sign-up`} signInUrl={`${basePath}/sign-in`} />
@@ -149,7 +157,6 @@ function ClerkProviderWithRoutes() {
       proxyUrl={clerkProxyUrl}
       appearance={clerkAppearance}
       signInUrl={`${basePath}/sign-in`}
-      signUpUrl={`${basePath}/sign-up`}
       routerPush={(to) => setLocation(stripBase(to))}
       routerReplace={(to) => setLocation(stripBase(to), { replace: true })}
     >
