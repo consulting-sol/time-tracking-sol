@@ -1,7 +1,12 @@
+import { useState, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { useCreateTimeEntry, useListProjects, getListProjectsQueryKey } from "@workspace/api-client-react";
+import {
+  useCreateTimeEntry,
+  useListProjects, getListProjectsQueryKey,
+  useListClients, getListClientsQueryKey,
+} from "@workspace/api-client-react";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -15,6 +20,8 @@ import { queryClient } from "@/lib/queryClient";
 import { ChevronLeft } from "lucide-react";
 import { format } from "date-fns";
 
+const NO_CLIENT = "__none__";
+
 const timeEntrySchema = z.object({
   projectId: z.coerce.number().min(1, "Please select a project"),
   date: z.string().min(1, "Date is required"),
@@ -27,11 +34,20 @@ type TimeEntryFormValues = z.infer<typeof timeEntrySchema>;
 export function NewTimeEntryPage() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+  const [selectedClientId, setSelectedClientId] = useState<string>("");
 
+  const { data: clients } = useListClients({ query: { queryKey: getListClientsQueryKey() } });
   const { data: projects } = useListProjects(
-    { activeOnly: true }, 
+    { activeOnly: true },
     { query: { queryKey: getListProjectsQueryKey({ activeOnly: true }) } }
   );
+
+  const filteredProjects = useMemo(() => {
+    if (!projects) return [];
+    if (!selectedClientId) return [];
+    if (selectedClientId === NO_CLIENT) return projects.filter(p => !p.clientId);
+    return projects.filter(p => p.clientId === Number(selectedClientId));
+  }, [projects, selectedClientId]);
 
   const form = useForm<TimeEntryFormValues>({
     resolver: zodResolver(timeEntrySchema),
@@ -50,19 +66,26 @@ export function NewTimeEntryPage() {
         queryClient.invalidateQueries();
         setLocation("/time-entries");
       },
-      onError: (error) => {
-        toast({ 
-          title: "Failed to log time", 
+      onError: () => {
+        toast({
+          title: "Failed to log time",
           description: "An error occurred. Please try again.",
-          variant: "destructive" 
+          variant: "destructive",
         });
-      }
-    }
+      },
+    },
   });
 
   function onSubmit(data: TimeEntryFormValues) {
     createMutation.mutate({ data });
   }
+
+  function handleClientChange(clientId: string) {
+    setSelectedClientId(clientId);
+    form.setValue("projectId", 0);
+  }
+
+  const hasNoClientProjects = projects?.some(p => !p.clientId) ?? false;
 
   return (
     <div className="flex min-h-[100dvh] bg-muted/40">
@@ -87,48 +110,74 @@ export function NewTimeEntryPage() {
             <CardContent>
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                  
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Step 1: Client */}
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium leading-none">Client</label>
+                      <Select value={selectedClientId} onValueChange={handleClientChange}>
+                        <SelectTrigger data-testid="select-client">
+                          <SelectValue placeholder="Select a client" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {clients?.map(c => (
+                            <SelectItem key={c.id} value={String(c.id)}>{c.name}</SelectItem>
+                          ))}
+                          {hasNoClientProjects && (
+                            <SelectItem value={NO_CLIENT}>Other / No Client</SelectItem>
+                          )}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* Step 2: Project (filtered by client) */}
                     <FormField
                       control={form.control}
                       name="projectId"
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Project</FormLabel>
-                          <Select 
-                            onValueChange={field.onChange} 
-                            defaultValue={field.value ? field.value.toString() : ""}
+                          <Select
+                            value={field.value ? field.value.toString() : ""}
+                            onValueChange={field.onChange}
+                            disabled={!selectedClientId}
                           >
                             <FormControl>
                               <SelectTrigger data-testid="select-project">
-                                <SelectValue placeholder="Select a project" />
+                                <SelectValue placeholder={selectedClientId ? "Select a project" : "Select a client first"} />
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              {projects?.map(p => (
-                                <SelectItem key={p.id} value={p.id.toString()}>{p.name}</SelectItem>
-                              ))}
+                              {filteredProjects.length === 0 ? (
+                                <div className="py-3 px-2 text-sm text-muted-foreground text-center">
+                                  No active projects for this client
+                                </div>
+                              ) : (
+                                filteredProjects.map(p => (
+                                  <SelectItem key={p.id} value={p.id.toString()}>{p.name}</SelectItem>
+                                ))
+                              )}
                             </SelectContent>
                           </Select>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
-
-                    <FormField
-                      control={form.control}
-                      name="date"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Date</FormLabel>
-                          <FormControl>
-                            <Input type="date" {...field} data-testid="input-date" />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
                   </div>
+
+                  <FormField
+                    control={form.control}
+                    name="date"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Date</FormLabel>
+                        <FormControl>
+                          <Input type="date" {...field} data-testid="input-date" className="max-w-[200px]" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
                   <FormField
                     control={form.control}
@@ -151,10 +200,10 @@ export function NewTimeEntryPage() {
                       <FormItem>
                         <FormLabel>Description of Work</FormLabel>
                         <FormControl>
-                          <Textarea 
-                            placeholder="What did you work on?" 
-                            className="min-h-[100px] resize-y" 
-                            {...field} 
+                          <Textarea
+                            placeholder="What did you work on?"
+                            className="min-h-[100px] resize-y"
+                            {...field}
                             data-testid="input-description"
                           />
                         </FormControl>
@@ -167,8 +216,8 @@ export function NewTimeEntryPage() {
                     <Button variant="outline" asChild type="button">
                       <Link href="/time-entries">Cancel</Link>
                     </Button>
-                    <Button 
-                      type="submit" 
+                    <Button
+                      type="submit"
                       disabled={createMutation.isPending}
                       data-testid="btn-submit-time"
                     >
