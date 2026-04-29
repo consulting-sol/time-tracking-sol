@@ -1,14 +1,16 @@
 import { useState, useMemo } from "react";
+import * as XLSX from "xlsx";
 import { useListTimeEntries, getListTimeEntriesQueryKey, useListProjects, getListProjectsQueryKey, useListUsers, getListUsersQueryKey } from "@workspace/api-client-react";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { format } from "date-fns";
-import { Clock } from "lucide-react";
+import { Clock, Download } from "lucide-react";
 
-type GroupBy = "none" | "project" | "client";
+type GroupBy = "none" | "project" | "client" | "consultant";
 
 export function AdminTimeEntriesPage() {
   const [projectIdFilter, setProjectIdFilter] = useState<string>("all");
@@ -34,9 +36,7 @@ export function AdminTimeEntriesPage() {
 
   const projectClientMap = useMemo(() => {
     const map: Record<number, string> = {};
-    for (const p of projects ?? []) {
-      map[p.id] = p.clientName || "No Client";
-    }
+    for (const p of projects ?? []) map[p.id] = p.clientName || "No Client";
     return map;
   }, [projects]);
 
@@ -46,9 +46,10 @@ export function AdminTimeEntriesPage() {
     if (!entries || groupBy === "none") return [];
     const map = new Map<string, Entry[]>();
     for (const e of entries) {
-      const key = groupBy === "project"
-        ? (e.projectName || "Unknown Project")
-        : (projectClientMap[e.projectId] ?? "No Client");
+      const key =
+        groupBy === "project"   ? (e.projectName || "Unknown Project") :
+        groupBy === "client"    ? (projectClientMap[e.projectId] ?? "No Client") :
+        /* consultant */          (e.userDisplayName || "Unknown");
       if (!map.has(key)) map.set(key, []);
       map.get(key)!.push(e);
     }
@@ -60,13 +61,53 @@ export function AdminTimeEntriesPage() {
     [entries]
   );
 
+  const groupLabel: Record<GroupBy, string> = {
+    none: "",
+    project: "projects",
+    client: "clients",
+    consultant: "consultants",
+  };
+
+  const showClientCol = groupBy !== "client";
+  const showConsultantCol = groupBy !== "consultant";
+  const colCount = showClientCol && showConsultantCol ? 6 : 5;
+
+  function exportToExcel() {
+    if (!entries || entries.length === 0) return;
+    const rows = entries.map(e => ({
+      Date: format(new Date(e.date), "yyyy-MM-dd"),
+      Consultant: e.userDisplayName || "Unknown",
+      Project: e.projectName ?? "",
+      Client: projectClientMap[e.projectId] ?? "",
+      Description: e.description ?? "",
+      Hours: Number(e.hours),
+    }));
+    const ws = XLSX.utils.json_to_sheet(rows);
+    ws["!cols"] = [{ wch: 12 }, { wch: 20 }, { wch: 28 }, { wch: 20 }, { wch: 40 }, { wch: 8 }];
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Time Entries");
+    const filename = `oikos-solar-time-entries${dateFrom || dateTo ? `-${dateFrom || ""}${dateTo ? `_${dateTo}` : ""}` : ""}.xlsx`;
+    XLSX.writeFile(wb, filename);
+  }
+
   return (
     <div className="flex min-h-[100dvh] bg-muted/40">
       <Sidebar />
       <main className="flex-1 p-8 overflow-y-auto">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold tracking-tight">Organization Time Entries</h1>
-          <p className="text-muted-foreground mt-1">View and filter all logged hours across the organization.</p>
+        <div className="flex items-start justify-between mb-8">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Organization Time Entries</h1>
+            <p className="text-muted-foreground mt-1">View and filter all logged hours across the organization.</p>
+          </div>
+          <Button
+            onClick={exportToExcel}
+            disabled={!entries || entries.length === 0}
+            className="gap-2"
+            data-testid="btn-export-excel"
+          >
+            <Download className="h-4 w-4" />
+            Export to Excel
+          </Button>
         </div>
 
         <Card className="p-4 mb-6">
@@ -117,6 +158,7 @@ export function AdminTimeEntriesPage() {
                   <SelectItem value="none">No Grouping</SelectItem>
                   <SelectItem value="project">By Project</SelectItem>
                   <SelectItem value="client">By Client</SelectItem>
+                  <SelectItem value="consultant">By Consultant</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -127,7 +169,7 @@ export function AdminTimeEntriesPage() {
           <div className="flex items-center justify-between mb-3 px-1">
             <span className="text-sm text-muted-foreground">
               {entries.length} {entries.length === 1 ? "entry" : "entries"}
-              {groupBy !== "none" && ` across ${grouped.length} ${groupBy === "client" ? "clients" : "projects"}`}
+              {groupBy !== "none" && ` across ${grouped.length} ${groupLabel[groupBy]}`}
             </span>
             <span className="text-sm font-semibold">{totalHours.toFixed(1)}h total</span>
           </div>
@@ -139,18 +181,16 @@ export function AdminTimeEntriesPage() {
               <thead className="[&_tr]:border-b bg-muted/20">
                 <tr className="border-b transition-colors">
                   <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Date</th>
-                  <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Consultant</th>
+                  {showConsultantCol && <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Consultant</th>}
                   <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Project</th>
-                  {groupBy !== "client" && (
-                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Client</th>
-                  )}
+                  {showClientCol && <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Client</th>}
                   <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Description</th>
                   <th className="h-12 px-4 text-right align-middle font-medium text-muted-foreground">Hours</th>
                 </tr>
               </thead>
               <tbody className="[&_tr:last-child]:border-0">
                 {isLoading ? (
-                  Array.from({ length: 10 }).map((_, i) => (
+                  Array.from({ length: 8 }).map((_, i) => (
                     <tr key={i} className="border-b">
                       <td className="p-4"><Skeleton className="h-4 w-24" /></td>
                       <td className="p-4"><Skeleton className="h-4 w-32" /></td>
@@ -176,11 +216,8 @@ export function AdminTimeEntriesPage() {
                     grouped.map(group => {
                       const groupTotal = group.entries.reduce((sum, e) => sum + Number(e.hours), 0);
                       return [
-                        <tr key={`header-${group.key}`} className="border-b bg-muted/40">
-                          <td
-                            colSpan={groupBy === "client" ? 5 : 6}
-                            className="px-4 py-2.5"
-                          >
+                        <tr key={`hdr-${group.key}`} className="border-b bg-primary/10">
+                          <td colSpan={colCount} className="px-4 py-2.5">
                             <div className="flex items-center justify-between">
                               <span className="font-semibold text-foreground">{group.key}</span>
                               <span className="text-sm font-medium text-muted-foreground">
@@ -192,11 +229,9 @@ export function AdminTimeEntriesPage() {
                         ...group.entries.map(entry => (
                           <tr key={entry.id} className="border-b transition-colors hover:bg-muted/50">
                             <td className="p-4 align-middle whitespace-nowrap">{format(new Date(entry.date), "MMM d, yyyy")}</td>
-                            <td className="p-4 align-middle font-medium">{entry.userDisplayName || "Unknown"}</td>
+                            {showConsultantCol && <td className="p-4 align-middle font-medium">{entry.userDisplayName || "Unknown"}</td>}
                             <td className="p-4 align-middle">{entry.projectName}</td>
-                            {groupBy !== "client" && (
-                              <td className="p-4 align-middle text-muted-foreground">{projectClientMap[entry.projectId] ?? "—"}</td>
-                            )}
+                            {showClientCol && <td className="p-4 align-middle text-muted-foreground">{projectClientMap[entry.projectId] ?? "—"}</td>}
                             <td className="p-4 align-middle text-muted-foreground">{entry.description}</td>
                             <td className="p-4 align-middle text-right font-bold">{Number(entry.hours).toFixed(1)}</td>
                           </tr>
@@ -206,7 +241,7 @@ export function AdminTimeEntriesPage() {
                   )
                 ) : (
                   <tr>
-                    <td colSpan={6} className="p-12 text-center text-muted-foreground">
+                    <td colSpan={colCount} className="p-12 text-center text-muted-foreground">
                       <div className="flex flex-col items-center justify-center">
                         <div className="bg-muted p-3 rounded-full mb-4">
                           <Clock className="h-6 w-6" />
