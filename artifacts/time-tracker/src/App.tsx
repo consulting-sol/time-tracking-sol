@@ -1,5 +1,5 @@
-import { useEffect, useRef } from "react";
-import { ClerkProvider, SignIn, SignUp, Show, useClerk, useUser } from '@clerk/react';
+import React, { useEffect, useRef } from "react";
+import { ClerkProvider, SignIn, SignUp, Show, useClerk, useUser, useAuth } from '@clerk/react';
 import { publishableKeyFromHost } from '@clerk/react/internal';
 import { shadcn } from '@clerk/themes';
 import { Switch, Route, useLocation, Router as WouterRouter, Redirect } from 'wouter';
@@ -120,6 +120,27 @@ function HomeRedirect() {
   return <Redirect to="/dashboard" />;
 }
 
+function ProtectedRoute({ component: Component }: { component: React.ComponentType }) {
+  const { isLoaded, isSignedIn } = useAuth();
+  const [, setLocation] = useLocation();
+
+  useEffect(() => {
+    if (isLoaded && !isSignedIn) {
+      setLocation(`/sign-in`);
+    }
+  }, [isLoaded, isSignedIn, setLocation]);
+
+  if (!isLoaded) {
+    return (
+      <div className="flex min-h-[100dvh] items-center justify-center bg-background">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+      </div>
+    );
+  }
+  if (!isSignedIn) return null;
+  return <Component />;
+}
+
 function ClerkProviderWithRoutes() {
   const [, setLocation] = useLocation();
   return (
@@ -139,15 +160,15 @@ function ClerkProviderWithRoutes() {
           <Route path="/" component={HomeRedirect} />
           <Route path="/sign-in/*?" component={SignInPage} />
           <Route path="/sign-up/*?" component={SignUpPage} />
-          <Route path="/dashboard" component={DashboardPage} />
-          <Route path="/time-entries" component={TimeEntriesPage} />
-          <Route path="/time-entries/new" component={NewTimeEntryPage} />
-          <Route path="/time-entries/:id/edit" component={EditTimeEntryPage} />
-          <Route path="/admin/analytics" component={AdminAnalyticsPage} />
-          <Route path="/admin/time-entries" component={AdminTimeEntriesPage} />
-          <Route path="/admin/clients" component={AdminClientsPage} />
-          <Route path="/admin/projects" component={AdminProjectsPage} />
-          <Route path="/admin/users" component={AdminUsersPage} />
+          <Route path="/dashboard">{() => <ProtectedRoute component={DashboardPage} />}</Route>
+          <Route path="/time-entries">{() => <ProtectedRoute component={TimeEntriesPage} />}</Route>
+          <Route path="/time-entries/new">{() => <ProtectedRoute component={NewTimeEntryPage} />}</Route>
+          <Route path="/time-entries/:id/edit">{() => <ProtectedRoute component={EditTimeEntryPage} />}</Route>
+          <Route path="/admin/analytics">{() => <ProtectedRoute component={AdminAnalyticsPage} />}</Route>
+          <Route path="/admin/time-entries">{() => <ProtectedRoute component={AdminTimeEntriesPage} />}</Route>
+          <Route path="/admin/clients">{() => <ProtectedRoute component={AdminClientsPage} />}</Route>
+          <Route path="/admin/projects">{() => <ProtectedRoute component={AdminProjectsPage} />}</Route>
+          <Route path="/admin/users">{() => <ProtectedRoute component={AdminUsersPage} />}</Route>
           <Route component={NotFoundPage} />
         </Switch>
         <Toaster />
