@@ -1,15 +1,11 @@
 import { Router } from "express";
+import bcrypt from "bcryptjs";
 import { db, usersTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import { requireAuth, requireAdmin } from "../middlewares/requireAuth";
-import { InviteUserBody, UpdateUserBody } from "@workspace/api-zod";
-import { createClerkClient } from "@clerk/express";
+import { CreateUserBody, UpdateUserBody } from "@workspace/api-zod";
 
 const router = Router();
-
-function getClerkClient() {
-  return createClerkClient({ secretKey: process.env.CLERK_SECRET_KEY });
-}
 
 function getDisplayName(firstName?: string | null, lastName?: string | null, email?: string): string | null {
   if (firstName && lastName) return `${firstName} ${lastName}`;
@@ -27,7 +23,12 @@ router.get("/users/me", requireAuth, async (req, res): Promise<void> => {
     return;
   }
   res.json({
-    ...user,
+    clerkId: user.clerkId,
+    email: user.email,
+    firstName: user.firstName,
+    lastName: user.lastName,
+    role: user.role,
+    createdAt: user.createdAt,
     displayName: getDisplayName(user.firstName, user.lastName, user.email),
     totalHours: null,
   });
@@ -37,7 +38,12 @@ router.get("/users", requireAdmin, async (req, res): Promise<void> => {
   const users = await db.select().from(usersTable).orderBy(usersTable.createdAt);
 
   const result = users.map((u) => ({
-    ...u,
+    clerkId: u.clerkId,
+    email: u.email,
+    firstName: u.firstName,
+    lastName: u.lastName,
+    role: u.role,
+    createdAt: u.createdAt,
     displayName: getDisplayName(u.firstName, u.lastName, u.email),
     totalHours: null,
   }));
@@ -46,35 +52,44 @@ router.get("/users", requireAdmin, async (req, res): Promise<void> => {
 });
 
 router.post("/users", requireAdmin, async (req, res): Promise<void> => {
-  const body = InviteUserBody.safeParse(req.body);
+  const body = CreateUserBody.safeParse(req.body);
   if (!body.success) {
     res.status(400).json({ error: body.error.issues });
     return;
   }
 
-  const { email, role } = body.data;
+  const { email, firstName, lastName, role, password } = body.data;
 
-  const origin = process.env.REPLIT_DOMAINS
-    ? `https://${process.env.REPLIT_DOMAINS.split(",")[0]}`
-    : (req.headers.origin ?? "http://localhost:80");
-  const redirectUrl = `${origin}/sign-up`;
-
-  const clerkClient = getClerkClient();
-
-  try {
-    await clerkClient.invitations.createInvitation({
-      emailAddress: email,
-      redirectUrl,
-      publicMetadata: { role },
-    });
-  } catch (err: unknown) {
-    req.log.error({ err }, "Failed to send Clerk invitation");
-    const errMsg = err instanceof Error ? err.message : "Failed to send invitation";
-    res.status(400).json({ error: errMsg });
+  const existing = await db.query.usersTable.findFirst({
+    where: eq(usersTable.email, email.toLowerCase().trim()),
+  });
+  if (existing) {
+    res.status(409).json({ error: "A user with that email already exists" });
     return;
   }
 
-  res.status(201).json({ invited: true, email });
+  const passwordHash = await bcrypt.hash(password, 12);
+  const userId = crypto.randomUUID();
+
+  const [user] = await db.insert(usersTable).values({
+    clerkId: userId,
+    email: email.toLowerCase().trim(),
+    firstName,
+    lastName,
+    role,
+    passwordHash,
+  }).returning();
+
+  res.status(201).json({
+    clerkId: user.clerkId,
+    email: user.email,
+    firstName: user.firstName,
+    lastName: user.lastName,
+    role: user.role,
+    createdAt: user.createdAt,
+    displayName: getDisplayName(user.firstName, user.lastName, user.email),
+    totalHours: null,
+  });
 });
 
 router.get("/users/:clerkId", requireAdmin, async (req, res): Promise<void> => {
@@ -87,7 +102,12 @@ router.get("/users/:clerkId", requireAdmin, async (req, res): Promise<void> => {
     return;
   }
   res.json({
-    ...user,
+    clerkId: user.clerkId,
+    email: user.email,
+    firstName: user.firstName,
+    lastName: user.lastName,
+    role: user.role,
+    createdAt: user.createdAt,
     displayName: getDisplayName(user.firstName, user.lastName, user.email),
     totalHours: null,
   });
@@ -118,7 +138,12 @@ router.put("/users/:clerkId", requireAdmin, async (req, res): Promise<void> => {
   }
 
   res.json({
-    ...user,
+    clerkId: user.clerkId,
+    email: user.email,
+    firstName: user.firstName,
+    lastName: user.lastName,
+    role: user.role,
+    createdAt: user.createdAt,
     displayName: getDisplayName(user.firstName, user.lastName, user.email),
     totalHours: null,
   });
@@ -132,13 +157,6 @@ router.delete("/users/:clerkId", requireAdmin, async (req, res): Promise<void> =
   if (!existing) {
     res.status(404).json({ error: "User not found" });
     return;
-  }
-
-  const clerkClient = getClerkClient();
-  try {
-    await clerkClient.users.deleteUser(clerkId);
-  } catch (err) {
-    req.log.warn({ err }, "Could not delete Clerk user");
   }
 
   await db.delete(usersTable).where(eq(usersTable.clerkId, clerkId));

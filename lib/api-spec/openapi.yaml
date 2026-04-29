@@ -334,22 +334,22 @@ paths:
                 items:
                   $ref: "#/components/schemas/User"
     post:
-      operationId: inviteUser
+      operationId: createUser
       tags: [users]
-      summary: Invite a new user via email (admin only)
+      summary: Create a new user account (admin only)
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/InviteUserBody"
+              $ref: "#/components/schemas/CreateUserBody"
       responses:
         "201":
-          description: Invitation sent
+          description: Created user
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/InviteResponse"
+                $ref: "#/components/schemas/User"
 
   /users/me:
     get:
@@ -729,28 +729,26 @@ components:
         - role
         - createdAt
 
-    InviteUserBody:
+    CreateUserBody:
       type: object
       properties:
         email:
+          type: string
+        firstName:
+          type: string
+        lastName:
           type: string
         role:
           type: string
           enum: [admin, consultant]
-      required:
-        - email
-        - role
-
-    InviteResponse:
-      type: object
-      properties:
-        invited:
-          type: boolean
-        email:
+        password:
           type: string
       required:
-        - invited
         - email
+        - firstName
+        - lastName
+        - role
+        - password
 
     UpdateUserBody:
       type: object

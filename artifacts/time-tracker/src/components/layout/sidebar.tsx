@@ -1,13 +1,15 @@
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
-import { LayoutDashboard, Clock, FileText, BarChart3, List, FolderKanban, Users, Building2 } from "lucide-react";
+import { LayoutDashboard, Clock, FileText, BarChart3, List, FolderKanban, Users, Building2, LogOut } from "lucide-react";
 import { useGetMe, getGetMeQueryKey } from "@workspace/api-client-react";
-import { UserButton } from "@clerk/react";
+import { useAuth } from "@/hooks/use-auth";
+import { Button } from "@/components/ui/button";
 
 interface SidebarProps extends React.HTMLAttributes<HTMLDivElement> {}
 
 export function Sidebar({ className }: SidebarProps) {
   const [location] = useLocation();
+  const { logout } = useAuth();
   const { data: me } = useGetMe({
     query: {
       queryKey: getGetMeQueryKey()
@@ -83,11 +85,20 @@ export function Sidebar({ className }: SidebarProps) {
       </div>
 
       <div className="p-4 border-t border-sidebar-border mt-auto flex items-center gap-3">
-        <UserButton />
-        <div className="flex flex-col overflow-hidden">
+        <div className="flex flex-col overflow-hidden flex-1">
           <span className="text-sm font-medium truncate text-sidebar-foreground">{me?.displayName || me?.firstName || me?.email}</span>
           <span className="text-xs capitalize text-sidebar-foreground/50">{me?.role}</span>
         </div>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8 text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent"
+          onClick={() => logout()}
+          title="Sign out"
+          data-testid="btn-logout"
+        >
+          <LogOut className="h-4 w-4" />
+        </Button>
       </div>
     </div>
   );

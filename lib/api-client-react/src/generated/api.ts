@@ -22,13 +22,12 @@ import type {
   CreateClientBody,
   CreateProjectBody,
   CreateTimeEntryBody,
+  CreateUserBody,
   GetAnalyticsSummaryParams,
   GetMySummaryParams,
   GetTimeByProjectParams,
   GetTimeByUserParams,
   HealthStatus,
-  InviteResponse,
-  InviteUserBody,
   ListProjectsParams,
   ListTimeEntriesParams,
   PersonalSummary,
@@ -1484,42 +1483,42 @@ export function useListUsers<
 }
 
 /**
- * @summary Invite a new user via email (admin only)
+ * @summary Create a new user account (admin only)
  */
-export const getInviteUserUrl = () => {
+export const getCreateUserUrl = () => {
   return `/api/users`;
 };
 
-export const inviteUser = async (
-  inviteUserBody: InviteUserBody,
+export const createUser = async (
+  createUserBody: CreateUserBody,
   options?: RequestInit,
-): Promise<InviteResponse> => {
-  return customFetch<InviteResponse>(getInviteUserUrl(), {
+): Promise<User> => {
+  return customFetch<User>(getCreateUserUrl(), {
     ...options,
     method: "POST",
     headers: { "Content-Type": "application/json", ...options?.headers },
-    body: JSON.stringify(inviteUserBody),
+    body: JSON.stringify(createUserBody),
   });
 };
 
-export const getInviteUserMutationOptions = <
+export const getCreateUserMutationOptions = <
   TError = ErrorType<unknown>,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof inviteUser>>,
+    Awaited<ReturnType<typeof createUser>>,
     TError,
-    { data: BodyType<InviteUserBody> },
+    { data: BodyType<CreateUserBody> },
     TContext
   >;
   request?: SecondParameter<typeof customFetch>;
 }): UseMutationOptions<
-  Awaited<ReturnType<typeof inviteUser>>,
+  Awaited<ReturnType<typeof createUser>>,
   TError,
-  { data: BodyType<InviteUserBody> },
+  { data: BodyType<CreateUserBody> },
   TContext
 > => {
-  const mutationKey = ["inviteUser"];
+  const mutationKey = ["createUser"];
   const { mutation: mutationOptions, request: requestOptions } = options
     ? options.mutation &&
       "mutationKey" in options.mutation &&
@@ -1529,44 +1528,44 @@ export const getInviteUserMutationOptions = <
     : { mutation: { mutationKey }, request: undefined };
 
   const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof inviteUser>>,
-    { data: BodyType<InviteUserBody> }
+    Awaited<ReturnType<typeof createUser>>,
+    { data: BodyType<CreateUserBody> }
   > = (props) => {
     const { data } = props ?? {};
 
-    return inviteUser(data, requestOptions);
+    return createUser(data, requestOptions);
   };
 
   return { mutationFn, ...mutationOptions };
 };
 
-export type InviteUserMutationResult = NonNullable<
-  Awaited<ReturnType<typeof inviteUser>>
+export type CreateUserMutationResult = NonNullable<
+  Awaited<ReturnType<typeof createUser>>
 >;
-export type InviteUserMutationBody = BodyType<InviteUserBody>;
-export type InviteUserMutationError = ErrorType<unknown>;
+export type CreateUserMutationBody = BodyType<CreateUserBody>;
+export type CreateUserMutationError = ErrorType<unknown>;
 
 /**
- * @summary Invite a new user via email (admin only)
+ * @summary Create a new user account (admin only)
  */
-export const useInviteUser = <
+export const useCreateUser = <
   TError = ErrorType<unknown>,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof inviteUser>>,
+    Awaited<ReturnType<typeof createUser>>,
     TError,
-    { data: BodyType<InviteUserBody> },
+    { data: BodyType<CreateUserBody> },
     TContext
   >;
   request?: SecondParameter<typeof customFetch>;
 }): UseMutationResult<
-  Awaited<ReturnType<typeof inviteUser>>,
+  Awaited<ReturnType<typeof createUser>>,
   TError,
-  { data: BodyType<InviteUserBody> },
+  { data: BodyType<CreateUserBody> },
   TContext
 > => {
-  return useMutation(getInviteUserMutationOptions(options));
+  return useMutation(getCreateUserMutationOptions(options));
 };
 
 /**

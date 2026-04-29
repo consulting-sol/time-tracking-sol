@@ -1,8 +1,12 @@
-import { getAuth } from "@clerk/express";
+import jwt from "jsonwebtoken";
+import cookieParser from "cookie-parser";
 import type { Request, Response, NextFunction } from "express";
 import { db } from "@workspace/db";
 import { usersTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
+import { COOKIE_NAME, JWT_SECRET } from "../routes/auth";
+
+export { cookieParser };
 
 declare global {
   namespace Express {
@@ -13,13 +17,15 @@ declare global {
   }
 }
 
-const DEV_BYPASS_CLERK_ID = "user_3D1yXHiFwOi7jJBlgf3P5x6Y0ux";
-
-function resolveUserId(req: Request): string | null {
-  const auth = getAuth(req);
-  if (auth?.userId) return auth.userId;
-  if (process.env.NODE_ENV !== "production") return DEV_BYPASS_CLERK_ID;
-  return null;
+function extractUserId(req: Request): string | null {
+  const token = req.cookies?.[COOKIE_NAME];
+  if (!token) return null;
+  try {
+    const payload = jwt.verify(token, JWT_SECRET) as { userId: string };
+    return payload.userId ?? null;
+  } catch {
+    return null;
+  }
 }
 
 export const requireAuth = async (
@@ -27,7 +33,7 @@ export const requireAuth = async (
   res: Response,
   next: NextFunction,
 ): Promise<void> => {
-  const userId = resolveUserId(req);
+  const userId = extractUserId(req);
   if (!userId) {
     res.status(401).json({ error: "Unauthorized" });
     return;
@@ -46,7 +52,7 @@ export const requireAdmin = async (
   res: Response,
   next: NextFunction,
 ): Promise<void> => {
-  const userId = resolveUserId(req);
+  const userId = extractUserId(req);
   if (!userId) {
     res.status(401).json({ error: "Unauthorized" });
     return;

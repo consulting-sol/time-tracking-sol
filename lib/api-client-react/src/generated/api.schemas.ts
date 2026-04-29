@@ -98,22 +98,20 @@ export interface User {
   totalHours?: number | null;
 }
 
-export type InviteUserBodyRole =
-  (typeof InviteUserBodyRole)[keyof typeof InviteUserBodyRole];
+export type CreateUserBodyRole =
+  (typeof CreateUserBodyRole)[keyof typeof CreateUserBodyRole];
 
-export const InviteUserBodyRole = {
+export const CreateUserBodyRole = {
   admin: "admin",
   consultant: "consultant",
 } as const;
 
-export interface InviteUserBody {
+export interface CreateUserBody {
   email: string;
-  role: InviteUserBodyRole;
-}
-
-export interface InviteResponse {
-  invited: boolean;
-  email: string;
+  firstName: string;
+  lastName: string;
+  role: CreateUserBodyRole;
+  password: string;
 }
 
 export type UpdateUserBodyRole =

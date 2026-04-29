@@ -15,7 +15,7 @@ Time tracking web app for a student consulting organization. Consultants log hou
 - **Validation**: Zod (`zod/v4`), `drizzle-zod`
 - **API codegen**: Orval (from OpenAPI spec)
 - **Build**: esbuild (CJS bundle)
-- **Auth**: Clerk (Replit-managed)
+- **Auth**: Custom JWT + bcrypt (no third-party auth provider). Cookies signed with SESSION_SECRET.
 - **Frontend**: React + Vite (Tailwind CSS, shadcn/ui, wouter routing)
 - **Charts**: Recharts
 
@@ -34,7 +34,7 @@ Time tracking web app for a student consulting organization. Consultants log hou
 
 - `clients` - Client organisations with name, description, createdAt
 - `projects` - Projects with name, description, clientId (FK -> clients, nullable), clientName (legacy text), isActive. When displaying clientName: COALESCE(clients.name, projects.client_name)
-- `users` - User records linked to Clerk IDs, with role (admin/consultant)
+- `users` - User records with `clerk_id` as PK (now a UUID we generate), role (admin/consultant), `password_hash` for bcrypt
 - `time_entries` - Time logs linked to users and projects
 
 ## Key Commands
@@ -48,7 +48,9 @@ Time tracking web app for a student consulting organization. Consultants log hou
 
 - After running codegen, the generated `lib/api-zod/src/index.ts` may incorrectly add `export * from "./generated/api.schemas"`. Always fix it to only export from `"./generated/api"`.
 - `zod` is in `@workspace/api-server` dependencies as `"zod": "catalog:"`.
-- Dev auth bypass: `requireAuth.ts` falls back to hardcoded Clerk ID `user_3D1yXHiFwOi7jJBlgf3P5x6Y0ux` (Fabian Alberti, admin) when no token and NODE_ENV !== "production".
+- Auth uses JWT stored in an HTTP-only cookie named `auth_token`, signed with `SESSION_SECRET`. No dev bypass — log in normally.
+- First-time login: if a user's account has no password set, the login returns `{ error: "no_password" }` and the frontend shows a "Set Your Password" form. Admin creates users with initial passwords directly.
+- Admin creates users via the Users page (name, email, role, initial password) — no email invitations.
 
 ## Routes
 
@@ -71,8 +73,10 @@ Time tracking web app for a student consulting organization. Consultants log hou
 - `GET/PUT/DELETE /api/projects/:id` - Get/update/delete project
 - `GET/POST /api/time-entries` - List/create time entries
 - `GET/PUT/DELETE /api/time-entries/:id` - Get/update/delete time entry
-- `POST /api/users/sync` - Auto-sync Clerk user to local DB
-- `GET/POST /api/users` - List/invite users (admin)
+- `POST /api/auth/login` - Login with email + password (sets JWT cookie)
+- `POST /api/auth/logout` - Clear auth cookie
+- `POST /api/auth/set-password` - Set password for account with no password (first-time setup)
+- `GET/POST /api/users` - List users / create user with initial password (admin)
 - `GET/PUT/DELETE /api/users/:clerkId` - Get/update/delete user (admin)
 - `GET /api/analytics/summary` - Overall analytics (admin)
 - `GET /api/analytics/by-project` - Hours by project (admin)

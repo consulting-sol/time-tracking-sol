@@ -258,11 +258,14 @@ export const ListUsersResponseItem = zod.object({
 export const ListUsersResponse = zod.array(ListUsersResponseItem);
 
 /**
- * @summary Invite a new user via email (admin only)
+ * @summary Create a new user account (admin only)
  */
-export const InviteUserBody = zod.object({
+export const CreateUserBody = zod.object({
   email: zod.string(),
+  firstName: zod.string(),
+  lastName: zod.string(),
   role: zod.enum(["admin", "consultant"]),
+  password: zod.string(),
 });
 
 /**

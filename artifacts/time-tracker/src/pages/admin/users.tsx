@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { useListUsers, getListUsersQueryKey, useInviteUser, useUpdateUser, useDeleteUser, UserRole } from "@workspace/api-client-react";
+import { useListUsers, getListUsersQueryKey, useCreateUser, useUpdateUser, useDeleteUser } from "@workspace/api-client-react";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -32,41 +32,47 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 
-const inviteSchema = z.object({
+const createSchema = z.object({
   email: z.string().email("Invalid email address"),
+  firstName: z.string().min(1, "First name is required"),
+  lastName: z.string().min(1, "Last name is required"),
   role: z.enum(["admin", "consultant"]),
+  password: z.string().min(8, "Password must be at least 8 characters"),
 });
 
-type InviteFormValues = z.infer<typeof inviteSchema>;
+type CreateFormValues = z.infer<typeof createSchema>;
 
 export function AdminUsersPage() {
   const { toast } = useToast();
-  const [isInviteOpen, setIsInviteOpen] = useState(false);
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState<string | null>(null);
 
   const { data: users, isLoading } = useListUsers({ query: { queryKey: getListUsersQueryKey() } });
 
-  const form = useForm<InviteFormValues>({
-    resolver: zodResolver(inviteSchema),
+  const form = useForm<CreateFormValues>({
+    resolver: zodResolver(createSchema),
     defaultValues: {
       email: "",
+      firstName: "",
+      lastName: "",
       role: "consultant",
+      password: "",
     },
   });
 
-  const inviteMutation = useInviteUser({
+  const createMutation = useCreateUser({
     mutation: {
       onSuccess: () => {
-        toast({ title: "Invitation sent", description: "They will receive an email to set up their account." });
+        toast({ title: "User created", description: "They can now log in with their email and password." });
         queryClient.invalidateQueries({ queryKey: getListUsersQueryKey() });
-        setIsInviteOpen(false);
+        setIsCreateOpen(false);
         form.reset();
       },
       onError: (err: any) => {
-        toast({ 
-          title: "Failed to send invitation", 
-          description: err?.message || "There was an error sending the invitation.",
-          variant: "destructive" 
+        toast({
+          title: "Failed to create user",
+          description: err?.message || "There was an error creating the user.",
+          variant: "destructive",
         });
       }
     }
@@ -95,15 +101,15 @@ export function AdminUsersPage() {
     }
   });
 
-  function onInviteSubmit(data: InviteFormValues) {
-    inviteMutation.mutate({ data });
+  function onCreateSubmit(data: CreateFormValues) {
+    createMutation.mutate({ data });
   }
 
   function toggleRole(userId: string, currentRole: string) {
     const newRole = currentRole === "admin" ? "consultant" : "admin";
-    updateRoleMutation.mutate({ 
-      clerkId: userId, 
-      data: { role: newRole as "admin" | "consultant" } 
+    updateRoleMutation.mutate({
+      clerkId: userId,
+      data: { role: newRole as "admin" | "consultant" }
     });
   }
 
@@ -116,7 +122,7 @@ export function AdminUsersPage() {
             <h1 className="text-3xl font-bold tracking-tight">Team Members</h1>
             <p className="text-muted-foreground mt-1">Manage consultants and administrators.</p>
           </div>
-          <Button onClick={() => setIsInviteOpen(true)} data-testid="btn-invite-user">
+          <Button onClick={() => setIsCreateOpen(true)} data-testid="btn-invite-user">
             <Plus className="mr-2 h-4 w-4" /> Add Team Member
           </Button>
         </div>
@@ -159,9 +165,9 @@ export function AdminUsersPage() {
                       <td className="p-4 align-middle text-right font-medium">{Number(user.totalHours ?? 0).toFixed(1)}</td>
                       <td className="p-4 align-middle text-right">
                         <div className="flex items-center justify-end gap-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
+                          <Button
+                            variant="ghost"
+                            size="sm"
                             className="text-muted-foreground"
                             onClick={() => toggleRole(user.clerkId, user.role)}
                             disabled={updateRoleMutation.isPending}
@@ -173,9 +179,9 @@ export function AdminUsersPage() {
                               <><ShieldAlert className="mr-1.5 h-3.5 w-3.5 text-orange-500" /> Make Admin</>
                             )}
                           </Button>
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
+                          <Button
+                            variant="ghost"
+                            size="icon"
                             className="h-8 w-8 text-muted-foreground hover:text-destructive"
                             onClick={() => setUserToDelete(user.clerkId)}
                             data-testid={`btn-delete-user-${user.clerkId}`}
@@ -204,17 +210,46 @@ export function AdminUsersPage() {
         </Card>
       </main>
 
-      <Dialog open={isInviteOpen} onOpenChange={setIsInviteOpen}>
-        <DialogContent className="sm:max-w-[400px]">
+      <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+        <DialogContent className="sm:max-w-[420px]">
           <DialogHeader>
-            <DialogTitle>Invite Team Member</DialogTitle>
+            <DialogTitle>Add Team Member</DialogTitle>
             <DialogDescription>
-              They will receive an email with a link to set up their password and access the app.
+              Create an account for the new team member. Share their email and password with them directly.
             </DialogDescription>
           </DialogHeader>
-          
+
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onInviteSubmit)} className="space-y-4 py-4">
+            <form onSubmit={form.handleSubmit(onCreateSubmit)} className="space-y-4 py-2">
+              <div className="grid grid-cols-2 gap-3">
+                <FormField
+                  control={form.control}
+                  name="firstName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>First Name</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Jane" {...field} data-testid="input-user-firstname" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="lastName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Last Name</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Doe" {...field} data-testid="input-user-lastname" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
               <FormField
                 control={form.control}
                 name="email"
@@ -250,13 +285,27 @@ export function AdminUsersPage() {
                   </FormItem>
                 )}
               />
-              
-              <div className="flex justify-end gap-3 pt-4">
-                <Button type="button" variant="outline" onClick={() => setIsInviteOpen(false)}>
+
+              <FormField
+                control={form.control}
+                name="password"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Initial Password</FormLabel>
+                    <FormControl>
+                      <Input type="password" placeholder="Min. 8 characters" {...field} data-testid="input-user-password" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <div className="flex justify-end gap-3 pt-2">
+                <Button type="button" variant="outline" onClick={() => { setIsCreateOpen(false); form.reset(); }}>
                   Cancel
                 </Button>
-                <Button type="submit" disabled={inviteMutation.isPending} data-testid="btn-submit-user">
-                  {inviteMutation.isPending ? "Sending..." : "Send Invitation"}
+                <Button type="submit" disabled={createMutation.isPending} data-testid="btn-submit-user">
+                  {createMutation.isPending ? "Creating…" : "Create Account"}
                 </Button>
               </div>
             </form>
@@ -274,7 +323,7 @@ export function AdminUsersPage() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel data-testid="btn-cancel-delete-user">Cancel</AlertDialogCancel>
-            <AlertDialogAction 
+            <AlertDialogAction
               onClick={() => userToDelete && deleteMutation.mutate({ clerkId: userToDelete })}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               disabled={deleteMutation.isPending}
