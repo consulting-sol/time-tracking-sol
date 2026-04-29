@@ -28,16 +28,11 @@ export function Sidebar({ className }: SidebarProps) {
   ];
 
   return (
-    <div className={cn("pb-12 border-r bg-card min-h-[100dvh] w-64 flex flex-col", className)}>
+    <div className={cn("pb-4 min-h-[100dvh] w-64 flex flex-col bg-sidebar text-sidebar-foreground border-r border-sidebar-border", className)}>
       <div className="space-y-4 py-4 flex-1">
         <div className="px-3 py-2">
           <div className="flex items-center mb-6 pl-2">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-6 w-6 mr-2">
-              <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
-            </svg>
-            <h2 className="text-lg font-semibold tracking-tight">
-              TimeTracker
-            </h2>
+            <img src="/logo.webp" alt="oikos Solar" className="h-12 w-auto object-contain" />
           </div>
           <div className="space-y-1">
             {consultantLinks.map((link) => (
@@ -45,8 +40,10 @@ export function Sidebar({ className }: SidebarProps) {
                 key={link.href}
                 href={link.href}
                 className={cn(
-                  "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all hover:text-primary",
-                  location === link.href ? "bg-muted text-primary" : "text-muted-foreground"
+                  "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-all",
+                  location === link.href
+                    ? "bg-sidebar-primary text-sidebar-primary-foreground"
+                    : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                 )}
                 data-testid={`link-sidebar-${link.label.toLowerCase().replace(/\s+/g, '-')}`}
               >
@@ -59,7 +56,7 @@ export function Sidebar({ className }: SidebarProps) {
 
         {me?.role === "admin" && (
           <div className="px-3 py-2">
-            <h2 className="mb-2 px-4 text-xs font-semibold uppercase tracking-tight text-muted-foreground">
+            <h2 className="mb-2 px-4 text-[10px] font-semibold uppercase tracking-widest text-sidebar-foreground/40">
               Administration
             </h2>
             <div className="space-y-1">
@@ -68,8 +65,10 @@ export function Sidebar({ className }: SidebarProps) {
                   key={link.href}
                   href={link.href}
                   className={cn(
-                    "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all hover:text-primary",
-                    location === link.href ? "bg-muted text-primary" : "text-muted-foreground"
+                    "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-all",
+                    location === link.href
+                      ? "bg-sidebar-primary text-sidebar-primary-foreground"
+                      : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                   )}
                   data-testid={`link-sidebar-admin-${link.label.toLowerCase().replace(/\s+/g, '-')}`}
                 >
@@ -81,14 +80,12 @@ export function Sidebar({ className }: SidebarProps) {
           </div>
         )}
       </div>
-      
-      <div className="p-4 border-t mt-auto flex items-center justify-between">
-        <div className="flex items-center gap-2 overflow-hidden">
-          <UserButton />
-          <div className="flex flex-col overflow-hidden">
-            <span className="text-sm font-medium truncate">{me?.displayName || me?.firstName || me?.email}</span>
-            <span className="text-xs text-muted-foreground capitalize">{me?.role}</span>
-          </div>
+
+      <div className="p-4 border-t border-sidebar-border mt-auto flex items-center gap-3">
+        <UserButton />
+        <div className="flex flex-col overflow-hidden">
+          <span className="text-sm font-medium truncate text-sidebar-foreground">{me?.displayName || me?.firstName || me?.email}</span>
+          <span className="text-xs capitalize text-sidebar-foreground/50">{me?.role}</span>
         </div>
       </div>
     </div>
