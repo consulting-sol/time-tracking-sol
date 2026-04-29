@@ -192,7 +192,7 @@ export function AdminProjectsPage() {
                         {project.description && <div className="text-xs text-muted-foreground mt-1 line-clamp-1">{project.description}</div>}
                       </td>
                       <td className="p-4 align-middle font-medium text-muted-foreground">{project.clientName || '—'}</td>
-                      <td className="p-4 align-middle text-right font-medium">{project.totalHours?.toFixed(1) || 0}</td>
+                      <td className="p-4 align-middle text-right font-medium">{Number(project.totalHours ?? 0).toFixed(1)}</td>
                       <td className="p-4 align-middle text-right">
                         <div className="flex items-center justify-end gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                           <Button 

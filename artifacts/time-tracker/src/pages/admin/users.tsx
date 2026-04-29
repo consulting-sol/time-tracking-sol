@@ -162,7 +162,7 @@ export function AdminUsersPage() {
                           {user.role}
                         </Badge>
                       </td>
-                      <td className="p-4 align-middle text-right font-medium">{user.totalHours?.toFixed(1) || 0}</td>
+                      <td className="p-4 align-middle text-right font-medium">{Number(user.totalHours ?? 0).toFixed(1)}</td>
                       <td className="p-4 align-middle text-right">
                         <div className="flex items-center justify-end gap-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                           <Button 

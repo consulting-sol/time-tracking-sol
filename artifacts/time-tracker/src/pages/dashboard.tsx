@@ -44,7 +44,7 @@ export function DashboardPage() {
               {isLoadingSummary ? (
                 <Skeleton className="h-7 w-20" />
               ) : (
-                <div className="text-2xl font-bold">{summary?.totalHours.toFixed(1) || 0}</div>
+                <div className="text-2xl font-bold">{Number(summary?.totalHours ?? 0).toFixed(1)}</div>
               )}
             </CardContent>
           </Card>
