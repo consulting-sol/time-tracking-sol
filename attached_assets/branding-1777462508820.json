@@ -1,0 +1,128 @@
+{
+  "colorScheme": "light",
+  "fonts": [
+    {
+      "family": "Epilogue",
+      "role": "body"
+    },
+    {
+      "family": "Anton",
+      "role": "heading"
+    }
+  ],
+  "colors": {
+    "primary": "#FFC700",
+    "accent": "#FFC700",
+    "background": "#000000",
+    "textPrimary": "#000000",
+    "link": "#FFC700"
+  },
+  "typography": {
+    "fontFamilies": {
+      "primary": "Epilogue",
+      "heading": "Anton"
+    },
+    "fontStacks": {
+      "heading": [
+        "Anton"
+      ],
+      "body": [
+        "sans-serif"
+      ],
+      "paragraph": [
+        "Epilogue"
+      ]
+    },
+    "fontSizes": {
+      "h1": "85.12px",
+      "h2": "57.472px",
+      "body": "25.216px"
+    }
+  },
+  "spacing": {
+    "baseUnit": 4,
+    "borderRadius": "0px"
+  },
+  "components": {
+    "buttonPrimary": {
+      "background": "#FFC700",
+      "textColor": "#000000",
+      "borderRadius": "300px",
+      "borderRadiusCorners": {
+        "topLeft": "300px",
+        "topRight": "300px",
+        "bottomRight": "300px",
+        "bottomLeft": "300px"
+      },
+      "shadow": "none"
+    },
+    "buttonSecondary": {
+      "background": "#000000",
+      "textColor": "#FFFFFF",
+      "borderRadius": "300px",
+      "borderRadiusCorners": {
+        "topLeft": "300px",
+        "topRight": "300px",
+        "bottomRight": "300px",
+        "bottomLeft": "300px"
+      },
+      "shadow": "none"
+    }
+  },
+  "images": {
+    "logo": "File saved at: attached_assets/logo.webp",
+    "favicon": "File saved at: attached_assets/favicon.webp",
+    "ogImage": "http://static1.squarespace.com/static/6964b2f1475e9f4ded87eee7/t/6964b4bc854a5e2f366df381/1768207548649/oikos_solar_transparent.png?format=1500w",
+    "logoHref": "File saved at: attached_assets/logoHref.html",
+    "logoAlt": "oikos Solar"
+  },
+  "__llm_logo_reasoning": {
+    "selectedIndex": 1,
+    "reasoning": "Selected #0 because it is visible, located in the header, links to the homepage, and matches the brand name 'oikos Solar'.",
+    "confidence": 0.9,
+    "source": "llm"
+  },
+  "__llm_button_reasoning": {
+    "primary": {
+      "index": 0,
+      "text": "Join us!",
+      "reasoning": "Button #0 'Join us!' uses the vibrant brand color #FFC700, making it the most prominent and action-oriented CTA."
+    },
+    "secondary": {
+      "index": 2,
+      "text": "Learn More",
+      "reasoning": "Button #2 'Learn More' has a different background color (#000000) and serves as a secondary action with informative intent."
+    },
+    "confidence": 0.95
+  },
+  "personality": {
+    "tone": "modern",
+    "energy": "high",
+    "targetAudience": "environmentally conscious consumers and businesses"
+  },
+  "designSystem": {
+    "framework": "custom",
+    "componentLibrary": ""
+  },
+  "confidence": {
+    "buttons": 0.95,
+    "colors": 0.9,
+    "overall": 0.925
+  },
+  "__llm_metadata": {
+    "logoSelection": {
+      "llmCalled": true,
+      "llmSucceeded": true,
+      "finalSource": "llm",
+      "rawLogoSelection": {
+        "selectedLogoIndex": 0,
+        "selectedLogoReasoning": "Selected #0 because it is visible, located in the header, links to the homepage, and matches the brand name 'oikos Solar'.",
+        "confidence": 0.9
+      }
+    },
+    "buttonClassification": {
+      "llmCalled": true,
+      "llmSucceeded": true
+    }
+  }
+}

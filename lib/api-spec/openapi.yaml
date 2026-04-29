@@ -3,20 +3,27 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Time tracking API for student consulting
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: projects
+    description: Project management
+  - name: timeEntries
+    description: Time entry management
+  - name: users
+    description: User management (admin)
+  - name: analytics
+    description: Analytics and reporting
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,6 +31,405 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /projects:
+    get:
+      operationId: listProjects
+      tags: [projects]
+      summary: List all projects
+      parameters:
+        - name: activeOnly
+          in: query
+          schema:
+            type: boolean
+      responses:
+        "200":
+          description: List of projects
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Project"
+    post:
+      operationId: createProject
+      tags: [projects]
+      summary: Create a new project (admin only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateProjectBody"
+      responses:
+        "201":
+          description: Created project
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Project"
+
+  /projects/{id}:
+    get:
+      operationId: getProject
+      tags: [projects]
+      summary: Get a project by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Project
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Project"
+    put:
+      operationId: updateProject
+      tags: [projects]
+      summary: Update a project (admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateProjectBody"
+      responses:
+        "200":
+          description: Updated project
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Project"
+    delete:
+      operationId: deleteProject
+      tags: [projects]
+      summary: Delete a project (admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /time-entries:
+    get:
+      operationId: listTimeEntries
+      tags: [timeEntries]
+      summary: List time entries (own entries for consultants, all for admins)
+      parameters:
+        - name: projectId
+          in: query
+          schema:
+            type: integer
+        - name: userId
+          in: query
+          schema:
+            type: string
+        - name: dateFrom
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: dateTo
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: List of time entries
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TimeEntry"
+    post:
+      operationId: createTimeEntry
+      tags: [timeEntries]
+      summary: Log a new time entry
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateTimeEntryBody"
+      responses:
+        "201":
+          description: Created time entry
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TimeEntry"
+
+  /time-entries/{id}:
+    get:
+      operationId: getTimeEntry
+      tags: [timeEntries]
+      summary: Get a single time entry
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Time entry
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TimeEntry"
+    put:
+      operationId: updateTimeEntry
+      tags: [timeEntries]
+      summary: Update a time entry (own entry or admin)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateTimeEntryBody"
+      responses:
+        "200":
+          description: Updated time entry
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TimeEntry"
+    delete:
+      operationId: deleteTimeEntry
+      tags: [timeEntries]
+      summary: Delete a time entry (own entry or admin)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /users:
+    get:
+      operationId: listUsers
+      tags: [users]
+      summary: List all users (admin only)
+      responses:
+        "200":
+          description: List of users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/User"
+    post:
+      operationId: inviteUser
+      tags: [users]
+      summary: Invite a new user (admin only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/InviteUserBody"
+      responses:
+        "201":
+          description: Invited user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+
+  /users/me:
+    get:
+      operationId: getMe
+      tags: [users]
+      summary: Get current user profile
+      responses:
+        "200":
+          description: Current user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+
+  /users/{clerkId}:
+    get:
+      operationId: getUser
+      tags: [users]
+      summary: Get a user by Clerk ID (admin only)
+      parameters:
+        - name: clerkId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: User
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+    put:
+      operationId: updateUser
+      tags: [users]
+      summary: Update a user's role (admin only)
+      parameters:
+        - name: clerkId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateUserBody"
+      responses:
+        "200":
+          description: Updated user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+    delete:
+      operationId: deleteUser
+      tags: [users]
+      summary: Remove a user (admin only)
+      parameters:
+        - name: clerkId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Deleted
+
+  /analytics/summary:
+    get:
+      operationId: getAnalyticsSummary
+      tags: [analytics]
+      summary: Get overall time tracking summary (admin)
+      parameters:
+        - name: dateFrom
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: dateTo
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: Summary statistics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AnalyticsSummary"
+
+  /analytics/by-project:
+    get:
+      operationId: getTimeByProject
+      tags: [analytics]
+      summary: Hours grouped by project (admin)
+      parameters:
+        - name: dateFrom
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: dateTo
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: Hours per project
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ProjectHours"
+
+  /analytics/by-user:
+    get:
+      operationId: getTimeByUser
+      tags: [analytics]
+      summary: Hours grouped by user (admin)
+      parameters:
+        - name: dateFrom
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: dateTo
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: Hours per user
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/UserHours"
+
+  /analytics/my-summary:
+    get:
+      operationId: getMySummary
+      tags: [analytics]
+      summary: Get current user's own time summary
+      parameters:
+        - name: dateFrom
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: dateTo
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: Personal summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PersonalSummary"
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +440,264 @@ components:
       required:
         - status
 
+    Project:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        clientName:
+          type: string
+          nullable: true
+        isActive:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        totalHours:
+          type: number
+          nullable: true
+      required:
+        - id
+        - name
+        - isActive
+        - createdAt
+
+    CreateProjectBody:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        clientName:
+          type: string
+        isActive:
+          type: boolean
+      required:
+        - name
+
+    UpdateProjectBody:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        clientName:
+          type: string
+          nullable: true
+        isActive:
+          type: boolean
+
+    TimeEntry:
+      type: object
+      properties:
+        id:
+          type: integer
+        userId:
+          type: string
+        userDisplayName:
+          type: string
+          nullable: true
+        projectId:
+          type: integer
+        projectName:
+          type: string
+        description:
+          type: string
+        date:
+          type: string
+          format: date
+        hours:
+          type: number
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - userId
+        - projectId
+        - projectName
+        - description
+        - date
+        - hours
+        - createdAt
+
+    CreateTimeEntryBody:
+      type: object
+      properties:
+        projectId:
+          type: integer
+        description:
+          type: string
+        date:
+          type: string
+          format: date
+        hours:
+          type: number
+      required:
+        - projectId
+        - description
+        - date
+        - hours
+
+    UpdateTimeEntryBody:
+      type: object
+      properties:
+        projectId:
+          type: integer
+        description:
+          type: string
+        date:
+          type: string
+          format: date
+        hours:
+          type: number
+
+    User:
+      type: object
+      properties:
+        clerkId:
+          type: string
+        email:
+          type: string
+        firstName:
+          type: string
+          nullable: true
+        lastName:
+          type: string
+          nullable: true
+        displayName:
+          type: string
+          nullable: true
+        role:
+          type: string
+          enum: [admin, consultant]
+        createdAt:
+          type: string
+          format: date-time
+        totalHours:
+          type: number
+          nullable: true
+      required:
+        - clerkId
+        - email
+        - role
+        - createdAt
+
+    InviteUserBody:
+      type: object
+      properties:
+        email:
+          type: string
+        firstName:
+          type: string
+        lastName:
+          type: string
+        role:
+          type: string
+          enum: [admin, consultant]
+        password:
+          type: string
+      required:
+        - email
+        - role
+        - password
+
+    UpdateUserBody:
+      type: object
+      properties:
+        role:
+          type: string
+          enum: [admin, consultant]
+        firstName:
+          type: string
+        lastName:
+          type: string
+
+    AnalyticsSummary:
+      type: object
+      properties:
+        totalHours:
+          type: number
+        totalEntries:
+          type: integer
+        totalProjects:
+          type: integer
+        totalConsultants:
+          type: integer
+        avgHoursPerEntry:
+          type: number
+      required:
+        - totalHours
+        - totalEntries
+        - totalProjects
+        - totalConsultants
+        - avgHoursPerEntry
+
+    ProjectHours:
+      type: object
+      properties:
+        projectId:
+          type: integer
+        projectName:
+          type: string
+        clientName:
+          type: string
+          nullable: true
+        totalHours:
+          type: number
+        entryCount:
+          type: integer
+      required:
+        - projectId
+        - projectName
+        - totalHours
+        - entryCount
+
+    UserHours:
+      type: object
+      properties:
+        userId:
+          type: string
+        displayName:
+          type: string
+          nullable: true
+        email:
+          type: string
+        totalHours:
+          type: number
+        entryCount:
+          type: integer
+      required:
+        - userId
+        - email
+        - totalHours
+        - entryCount
+
+    PersonalSummary:
+      type: object
+      properties:
+        totalHours:
+          type: number
+        totalEntries:
+          type: integer
+        projectBreakdown:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProjectHours"
+        recentEntries:
+          type: array
+          items:
+            $ref: "#/components/schemas/TimeEntry"
+      required:
+        - totalHours
+        - totalEntries
+        - projectBreakdown
+        - recentEntries
