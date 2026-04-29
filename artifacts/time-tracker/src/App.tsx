@@ -116,16 +116,7 @@ function UserSyncer() {
 }
 
 function HomeRedirect() {
-  return (
-    <>
-      <Show when="signed-in">
-        <Redirect to="/dashboard" />
-      </Show>
-      <Show when="signed-out">
-        <HomePage />
-      </Show>
-    </>
-  );
+  return <Redirect to="/dashboard" />;
 }
 
 function ClerkProviderWithRoutes() {
