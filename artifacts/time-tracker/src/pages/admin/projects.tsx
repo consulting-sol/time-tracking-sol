@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { useListProjects, getListProjectsQueryKey, useCreateProject, useUpdateProject, useDeleteProject, Project } from "@workspace/api-client-react";
+import { useListProjects, getListProjectsQueryKey, useCreateProject, useUpdateProject, useDeleteProject, useListClients, getListClientsQueryKey, Project } from "@workspace/api-client-react";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -10,7 +10,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Plus, Pencil, Trash2, Search, Check, X, FolderKanban } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Plus, Pencil, Trash2, FolderKanban } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { format } from "date-fns";
 import { queryClient } from "@/lib/queryClient";
@@ -35,7 +36,7 @@ import {
 
 const projectSchema = z.object({
   name: z.string().min(1, "Project name is required"),
-  clientName: z.string().optional(),
+  clientId: z.coerce.number().nullable().optional(),
   description: z.string().optional(),
   isActive: z.boolean().default(true),
 });
@@ -49,12 +50,13 @@ export function AdminProjectsPage() {
   const [projectToDelete, setProjectToDelete] = useState<number | null>(null);
 
   const { data: projects, isLoading } = useListProjects({}, { query: { queryKey: getListProjectsQueryKey() } });
+  const { data: clients } = useListClients({ query: { queryKey: getListClientsQueryKey() } });
 
   const form = useForm<ProjectFormValues>({
     resolver: zodResolver(projectSchema),
     defaultValues: {
       name: "",
-      clientName: "",
+      clientId: null,
       description: "",
       isActive: true,
     },
@@ -121,12 +123,7 @@ export function AdminProjectsPage() {
 
   function openCreateModal() {
     setEditingProject(null);
-    form.reset({
-      name: "",
-      clientName: "",
-      description: "",
-      isActive: true,
-    });
+    form.reset({ name: "", clientId: null, description: "", isActive: true });
     setIsModalOpen(true);
   }
 
@@ -134,7 +131,7 @@ export function AdminProjectsPage() {
     setEditingProject(project);
     form.reset({
       name: project.name,
-      clientName: project.clientName || "",
+      clientId: project.clientId ?? null,
       description: project.description || "",
       isActive: project.isActive,
     });
@@ -275,13 +272,26 @@ export function AdminProjectsPage() {
               
               <FormField
                 control={form.control}
-                name="clientName"
+                name="clientId"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Client Name (Optional)</FormLabel>
-                    <FormControl>
-                      <Input placeholder="e.g. Acme Corp" {...field} data-testid="input-project-client" />
-                    </FormControl>
+                    <FormLabel>Client (Optional)</FormLabel>
+                    <Select
+                      value={field.value != null ? String(field.value) : "none"}
+                      onValueChange={v => field.onChange(v === "none" ? null : Number(v))}
+                    >
+                      <FormControl>
+                        <SelectTrigger data-testid="input-project-client">
+                          <SelectValue placeholder="Select a client" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="none">No client</SelectItem>
+                        {clients?.map(c => (
+                          <SelectItem key={c.id} value={String(c.id)}>{c.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}

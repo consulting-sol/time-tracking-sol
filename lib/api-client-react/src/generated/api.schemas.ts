@@ -9,10 +9,29 @@ export interface HealthStatus {
   status: string;
 }
 
+export interface Client {
+  id: number;
+  name: string;
+  description?: string | null;
+  createdAt: string;
+  projectCount: number;
+}
+
+export interface CreateClientBody {
+  name: string;
+  description?: string;
+}
+
+export interface UpdateClientBody {
+  name?: string;
+  description?: string | null;
+}
+
 export interface Project {
   id: number;
   name: string;
   description?: string | null;
+  clientId?: number | null;
   clientName?: string | null;
   isActive: boolean;
   createdAt: string;
@@ -22,6 +41,7 @@ export interface Project {
 export interface CreateProjectBody {
   name: string;
   description?: string;
+  clientId?: number | null;
   clientName?: string;
   isActive?: boolean;
 }
@@ -29,6 +49,7 @@ export interface CreateProjectBody {
 export interface UpdateProjectBody {
   name?: string;
   description?: string | null;
+  clientId?: number | null;
   clientName?: string | null;
   isActive?: boolean;
 }

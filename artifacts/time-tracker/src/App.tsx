@@ -11,6 +11,7 @@ import { NewTimeEntryPage } from "./pages/new-time-entry";
 import { EditTimeEntryPage } from "./pages/edit-time-entry";
 import { AdminAnalyticsPage } from "./pages/admin/analytics";
 import { AdminTimeEntriesPage } from "./pages/admin/time-entries";
+import { AdminClientsPage } from "./pages/admin/clients";
 import { AdminProjectsPage } from "./pages/admin/projects";
 import { AdminUsersPage } from "./pages/admin/users";
 import { HomePage } from "./pages/home";
@@ -144,6 +145,7 @@ function ClerkProviderWithRoutes() {
           <Route path="/time-entries/:id/edit" component={EditTimeEntryPage} />
           <Route path="/admin/analytics" component={AdminAnalyticsPage} />
           <Route path="/admin/time-entries" component={AdminTimeEntriesPage} />
+          <Route path="/admin/clients" component={AdminClientsPage} />
           <Route path="/admin/projects" component={AdminProjectsPage} />
           <Route path="/admin/users" component={AdminUsersPage} />
           <Route component={NotFoundPage} />

@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { db, projectsTable, timeEntriesTable } from "@workspace/db";
+import { db, projectsTable, clientsTable, timeEntriesTable } from "@workspace/db";
 import { eq, sql } from "drizzle-orm";
 import { requireAuth, requireAdmin } from "../middlewares/requireAuth";
 import {
@@ -13,24 +13,28 @@ import {
 
 const router = Router();
 
+const projectSelect = {
+  id: projectsTable.id,
+  name: projectsTable.name,
+  description: projectsTable.description,
+  clientId: projectsTable.clientId,
+  clientName: sql<string | null>`COALESCE(${clientsTable.name}, ${projectsTable.clientName})`,
+  isActive: projectsTable.isActive,
+  createdAt: projectsTable.createdAt,
+  totalHours: sql<number>`COALESCE(SUM(${timeEntriesTable.hours}::numeric), 0)`,
+};
+
 router.get("/projects", requireAuth, async (req, res): Promise<void> => {
   const query = ListProjectsQueryParams.safeParse(req.query);
   const activeOnly = query.success ? query.data.activeOnly : undefined;
 
   const projects = await db
-    .select({
-      id: projectsTable.id,
-      name: projectsTable.name,
-      description: projectsTable.description,
-      clientName: projectsTable.clientName,
-      isActive: projectsTable.isActive,
-      createdAt: projectsTable.createdAt,
-      totalHours: sql<number>`COALESCE(SUM(${timeEntriesTable.hours}::numeric), 0)`,
-    })
+    .select(projectSelect)
     .from(projectsTable)
+    .leftJoin(clientsTable, eq(projectsTable.clientId, clientsTable.id))
     .leftJoin(timeEntriesTable, eq(timeEntriesTable.projectId, projectsTable.id))
     .where(activeOnly !== undefined ? eq(projectsTable.isActive, activeOnly) : undefined)
-    .groupBy(projectsTable.id);
+    .groupBy(projectsTable.id, clientsTable.name);
 
   res.json(projects);
 });
@@ -41,14 +45,24 @@ router.post("/projects", requireAdmin, async (req, res): Promise<void> => {
     res.status(400).json({ error: body.error.issues });
     return;
   }
-  const { name, description, clientName, isActive } = body.data;
+  const { name, description, clientName, clientId, isActive } = body.data;
   const [project] = await db.insert(projectsTable).values({
     name,
     description: description ?? null,
-    clientName: clientName ?? null,
+    clientName: clientId ? null : (clientName ?? null),
+    clientId: clientId ?? null,
     isActive: isActive ?? true,
   }).returning();
-  res.status(201).json(project);
+
+  const [withJoin] = await db
+    .select(projectSelect)
+    .from(projectsTable)
+    .leftJoin(clientsTable, eq(projectsTable.clientId, clientsTable.id))
+    .leftJoin(timeEntriesTable, eq(timeEntriesTable.projectId, projectsTable.id))
+    .where(eq(projectsTable.id, project.id))
+    .groupBy(projectsTable.id, clientsTable.name);
+
+  res.status(201).json(withJoin);
 });
 
 router.get("/projects/:id", requireAuth, async (req, res): Promise<void> => {
@@ -58,19 +72,12 @@ router.get("/projects/:id", requireAuth, async (req, res): Promise<void> => {
     return;
   }
   const [project] = await db
-    .select({
-      id: projectsTable.id,
-      name: projectsTable.name,
-      description: projectsTable.description,
-      clientName: projectsTable.clientName,
-      isActive: projectsTable.isActive,
-      createdAt: projectsTable.createdAt,
-      totalHours: sql<number>`COALESCE(SUM(${timeEntriesTable.hours}::numeric), 0)`,
-    })
+    .select(projectSelect)
     .from(projectsTable)
+    .leftJoin(clientsTable, eq(projectsTable.clientId, clientsTable.id))
     .leftJoin(timeEntriesTable, eq(timeEntriesTable.projectId, projectsTable.id))
     .where(eq(projectsTable.id, params.data.id))
-    .groupBy(projectsTable.id);
+    .groupBy(projectsTable.id, clientsTable.name);
 
   if (!project) {
     res.status(404).json({ error: "Project not found" });
@@ -90,11 +97,25 @@ router.put("/projects/:id", requireAdmin, async (req, res): Promise<void> => {
     res.status(400).json({ error: body.error.issues });
     return;
   }
-  const [updated] = await db
+
+  const updateData: Record<string, unknown> = { ...body.data };
+  if (body.data.clientId !== undefined) {
+    updateData.clientName = body.data.clientId ? null : body.data.clientName;
+  }
+
+  await db
     .update(projectsTable)
-    .set(body.data)
+    .set(updateData)
+    .where(eq(projectsTable.id, params.data.id));
+
+  const [updated] = await db
+    .select(projectSelect)
+    .from(projectsTable)
+    .leftJoin(clientsTable, eq(projectsTable.clientId, clientsTable.id))
+    .leftJoin(timeEntriesTable, eq(timeEntriesTable.projectId, projectsTable.id))
     .where(eq(projectsTable.id, params.data.id))
-    .returning();
+    .groupBy(projectsTable.id, clientsTable.name);
+
   if (!updated) {
     res.status(404).json({ error: "Project not found" });
     return;

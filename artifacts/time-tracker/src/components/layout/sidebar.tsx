@@ -1,6 +1,6 @@
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
-import { LayoutDashboard, Clock, FileText, BarChart3, List, FolderKanban, Users } from "lucide-react";
+import { LayoutDashboard, Clock, FileText, BarChart3, List, FolderKanban, Users, Building2 } from "lucide-react";
 import { useGetMe, getGetMeQueryKey } from "@workspace/api-client-react";
 import { UserButton } from "@clerk/react";
 
@@ -23,6 +23,7 @@ export function Sidebar({ className }: SidebarProps) {
   const adminLinks = [
     { href: "/admin/analytics", label: "Analytics", icon: BarChart3 },
     { href: "/admin/time-entries", label: "All Entries", icon: List },
+    { href: "/admin/clients", label: "Clients", icon: Building2 },
     { href: "/admin/projects", label: "Projects", icon: FolderKanban },
     { href: "/admin/users", label: "Users", icon: Users },
   ];

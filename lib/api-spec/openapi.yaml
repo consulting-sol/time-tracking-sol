@@ -10,6 +10,8 @@ servers:
 tags:
   - name: health
     description: Health operations
+  - name: clients
+    description: Client management
   - name: projects
     description: Project management
   - name: timeEntries
@@ -19,6 +21,93 @@ tags:
   - name: analytics
     description: Analytics and reporting
 paths:
+  /clients:
+    get:
+      operationId: listClients
+      tags: [clients]
+      summary: List all clients (admin only)
+      responses:
+        "200":
+          description: List of clients
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Client"
+    post:
+      operationId: createClient
+      tags: [clients]
+      summary: Create a new client (admin only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateClientBody"
+      responses:
+        "201":
+          description: Created client
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Client"
+
+  /clients/{id}:
+    get:
+      operationId: getClient
+      tags: [clients]
+      summary: Get a client by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Client
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Client"
+    put:
+      operationId: updateClient
+      tags: [clients]
+      summary: Update a client (admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateClientBody"
+      responses:
+        "200":
+          description: Updated client
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Client"
+    delete:
+      operationId: deleteClient
+      tags: [clients]
+      summary: Delete a client (admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
   /healthz:
     get:
       operationId: healthCheck
@@ -440,6 +529,46 @@ components:
       required:
         - status
 
+    Client:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        projectCount:
+          type: integer
+      required:
+        - id
+        - name
+        - createdAt
+        - projectCount
+
+    CreateClientBody:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+      required:
+        - name
+
+    UpdateClientBody:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+
     Project:
       type: object
       properties:
@@ -449,6 +578,9 @@ components:
           type: string
         description:
           type: string
+          nullable: true
+        clientId:
+          type: integer
           nullable: true
         clientName:
           type: string
@@ -474,6 +606,9 @@ components:
           type: string
         description:
           type: string
+        clientId:
+          type: integer
+          nullable: true
         clientName:
           type: string
         isActive:
@@ -488,6 +623,9 @@ components:
           type: string
         description:
           type: string
+          nullable: true
+        clientId:
+          type: integer
           nullable: true
         clientName:
           type: string

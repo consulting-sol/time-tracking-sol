@@ -8,6 +8,68 @@
 import * as zod from "zod";
 
 /**
+ * @summary List all clients (admin only)
+ */
+export const ListClientsResponseItem = zod.object({
+  id: zod.number(),
+  name: zod.string(),
+  description: zod.string().nullish(),
+  createdAt: zod.coerce.date(),
+  projectCount: zod.number(),
+});
+export const ListClientsResponse = zod.array(ListClientsResponseItem);
+
+/**
+ * @summary Create a new client (admin only)
+ */
+export const CreateClientBody = zod.object({
+  name: zod.string(),
+  description: zod.string().optional(),
+});
+
+/**
+ * @summary Get a client by ID
+ */
+export const GetClientParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const GetClientResponse = zod.object({
+  id: zod.number(),
+  name: zod.string(),
+  description: zod.string().nullish(),
+  createdAt: zod.coerce.date(),
+  projectCount: zod.number(),
+});
+
+/**
+ * @summary Update a client (admin only)
+ */
+export const UpdateClientParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const UpdateClientBody = zod.object({
+  name: zod.string().optional(),
+  description: zod.string().nullish(),
+});
+
+export const UpdateClientResponse = zod.object({
+  id: zod.number(),
+  name: zod.string(),
+  description: zod.string().nullish(),
+  createdAt: zod.coerce.date(),
+  projectCount: zod.number(),
+});
+
+/**
+ * @summary Delete a client (admin only)
+ */
+export const DeleteClientParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+/**
  * @summary Health check
  */
 export const HealthCheckResponse = zod.object({
@@ -25,6 +87,7 @@ export const ListProjectsResponseItem = zod.object({
   id: zod.number(),
   name: zod.string(),
   description: zod.string().nullish(),
+  clientId: zod.number().nullish(),
   clientName: zod.string().nullish(),
   isActive: zod.boolean(),
   createdAt: zod.coerce.date(),
@@ -38,6 +101,7 @@ export const ListProjectsResponse = zod.array(ListProjectsResponseItem);
 export const CreateProjectBody = zod.object({
   name: zod.string(),
   description: zod.string().optional(),
+  clientId: zod.number().nullish(),
   clientName: zod.string().optional(),
   isActive: zod.boolean().optional(),
 });
@@ -53,6 +117,7 @@ export const GetProjectResponse = zod.object({
   id: zod.number(),
   name: zod.string(),
   description: zod.string().nullish(),
+  clientId: zod.number().nullish(),
   clientName: zod.string().nullish(),
   isActive: zod.boolean(),
   createdAt: zod.coerce.date(),
@@ -69,6 +134,7 @@ export const UpdateProjectParams = zod.object({
 export const UpdateProjectBody = zod.object({
   name: zod.string().optional(),
   description: zod.string().nullish(),
+  clientId: zod.number().nullish(),
   clientName: zod.string().nullish(),
   isActive: zod.boolean().optional(),
 });
@@ -77,6 +143,7 @@ export const UpdateProjectResponse = zod.object({
   id: zod.number(),
   name: zod.string(),
   description: zod.string().nullish(),
+  clientId: zod.number().nullish(),
   clientName: zod.string().nullish(),
   isActive: zod.boolean(),
   createdAt: zod.coerce.date(),
