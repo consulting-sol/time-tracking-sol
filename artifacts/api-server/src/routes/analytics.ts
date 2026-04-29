@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { db, timeEntriesTable, projectsTable, usersTable } from "@workspace/db";
+import { db, timeEntriesTable, projectsTable, clientsTable, usersTable } from "@workspace/db";
 import { eq, and, gte, lte, sql, count, SQL } from "drizzle-orm";
 import { requireAuth, requireAdmin } from "../middlewares/requireAuth";
 
@@ -54,11 +54,12 @@ router.get("/analytics/by-project", requireAdmin, async (req, res): Promise<void
     .select({
       projectId: projectsTable.id,
       projectName: projectsTable.name,
-      clientName: projectsTable.clientName,
+      clientName: sql<string>`COALESCE(${clientsTable.name}, ${projectsTable.clientName})`,
       totalHours: sql<number>`COALESCE(SUM(${timeEntriesTable.hours}::numeric), 0)`,
       entryCount: count(timeEntriesTable.id),
     })
     .from(projectsTable)
+    .leftJoin(clientsTable, eq(projectsTable.clientId, clientsTable.id))
     .leftJoin(
       timeEntriesTable,
       and(
@@ -66,7 +67,7 @@ router.get("/analytics/by-project", requireAdmin, async (req, res): Promise<void
         ...(dateConditions.length > 0 ? dateConditions : []),
       ),
     )
-    .groupBy(projectsTable.id)
+    .groupBy(projectsTable.id, clientsTable.name)
     .orderBy(sql`SUM(${timeEntriesTable.hours}::numeric) DESC NULLS LAST`);
 
   res.json(rows.map((r) => ({ ...r, totalHours: Number(r.totalHours) })));

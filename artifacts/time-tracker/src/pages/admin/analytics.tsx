@@ -4,7 +4,7 @@ import { Sidebar } from "@/components/layout/sidebar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Clock, FolderKanban, Users, List } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, LabelList } from "recharts";
 import { Input } from "@/components/ui/input";
 
 type GroupBy = "project" | "client" | "consultant";
@@ -171,32 +171,44 @@ export function AdminAnalyticsPage() {
                 <Skeleton className="h-[300px] w-full" />
               </div>
             ) : chartData.length > 0 ? (
-              <div className="h-[340px] w-full">
+              <div style={{ height: Math.max(260, chartData.length * 44) }} className="w-full">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 40 }}>
+                  <BarChart
+                    layout="vertical"
+                    data={chartData}
+                    margin={{ top: 4, right: 56, left: 8, bottom: 4 }}
+                  >
                     <XAxis
-                      dataKey="label"
-                      fontSize={12}
-                      tickLine={false}
-                      axisLine={false}
-                      angle={-30}
-                      textAnchor="end"
-                      interval={0}
-                    />
-                    <YAxis
-                      fontSize={12}
+                      type="number"
+                      fontSize={11}
                       tickLine={false}
                       axisLine={false}
                       tickFormatter={(v) => `${v}h`}
+                    />
+                    <YAxis
+                      type="category"
+                      dataKey="label"
+                      width={160}
+                      fontSize={12}
+                      tickLine={false}
+                      axisLine={false}
+                      tick={{ fill: "#374151" }}
+                      tickFormatter={(v: string) => v.length > 22 ? v.slice(0, 21) + "…" : v}
                     />
                     <Tooltip
                       cursor={{ fill: "rgba(0,0,0,0.05)" }}
                       formatter={(value: number) => [`${Number(value).toFixed(1)} hours`, "Total Hours"]}
                     />
-                    <Bar dataKey="totalHours" radius={[4, 4, 0, 0]}>
+                    <Bar dataKey="totalHours" radius={[0, 4, 4, 0]}>
                       {chartData.map((_, i) => (
-                        <Cell key={i} fill={CHART_COLOR[groupBy]} opacity={1 - i * 0.06} />
+                        <Cell key={i} fill={CHART_COLOR[groupBy]} opacity={1 - i * 0.05} />
                       ))}
+                      <LabelList
+                        dataKey="totalHours"
+                        position="right"
+                        fontSize={12}
+                        formatter={(v: number) => `${Number(v).toFixed(1)}h`}
+                      />
                     </Bar>
                   </BarChart>
                 </ResponsiveContainer>
