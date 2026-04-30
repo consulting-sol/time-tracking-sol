@@ -31,8 +31,7 @@ router.get("/analytics/summary", requireAdmin, async (req, res): Promise<void> =
 
   const [{ totalConsultants }] = await db
     .select({ totalConsultants: count(usersTable.clerkId) })
-    .from(usersTable)
-    .where(eq(usersTable.role, "consultant"));
+    .from(usersTable);
 
   const totalHours = Number(totals.totalHours);
   const totalEntries = totals.totalEntries;
@@ -93,7 +92,6 @@ router.get("/analytics/by-user", requireAdmin, async (req, res): Promise<void> =
         ...(dateConditions.length > 0 ? dateConditions : []),
       ),
     )
-    .where(eq(usersTable.role, "consultant"))
     .groupBy(usersTable.clerkId)
     .orderBy(sql`SUM(${timeEntriesTable.hours}::numeric) DESC NULLS LAST`);
 

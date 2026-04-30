@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useListTimeEntries, getListTimeEntriesQueryKey, useDeleteTimeEntry, useListProjects, getListProjectsQueryKey } from "@workspace/api-client-react";
+import { useListTimeEntries, getListTimeEntriesQueryKey, useDeleteTimeEntry, useListProjects, getListProjectsQueryKey, useGetMe, getGetMeQueryKey } from "@workspace/api-client-react";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -26,16 +26,24 @@ export function TimeEntriesPage() {
   const [projectIdFilter, setProjectIdFilter] = useState<string>("all");
   const [entryToDelete, setEntryToDelete] = useState<number | null>(null);
 
+  const { data: me } = useGetMe({ query: { queryKey: getGetMeQueryKey() } });
+
   const { data: projects } = useListProjects(
     { activeOnly: true },
     { query: { queryKey: getListProjectsQueryKey({ activeOnly: true }) } }
   );
 
+  const queryParams = {
+    ...(me ? { userId: me.clerkId } : {}),
+    ...(projectIdFilter !== "all" ? { projectId: parseInt(projectIdFilter) } : {}),
+  };
+
   const { data: entries, isLoading } = useListTimeEntries(
-    projectIdFilter !== "all" ? { projectId: parseInt(projectIdFilter) } : {},
+    queryParams,
     {
       query: {
-        queryKey: getListTimeEntriesQueryKey(projectIdFilter !== "all" ? { projectId: parseInt(projectIdFilter) } : {})
+        queryKey: getListTimeEntriesQueryKey(queryParams),
+        enabled: !!me,
       }
     }
   );
