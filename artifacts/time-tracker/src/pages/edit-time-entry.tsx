@@ -115,7 +115,7 @@ export function EditTimeEntryPage() {
     return (
       <div className="flex min-h-[100dvh] bg-muted/40">
         <Sidebar />
-        <main className="flex-1 p-8">
+        <main className="flex-1 overflow-y-auto p-4 pt-[4.5rem] md:p-8 md:pt-8">
           <Skeleton className="h-8 w-48 mb-4" />
           <Skeleton className="h-[400px] w-full max-w-2xl" />
         </main>
@@ -126,7 +126,7 @@ export function EditTimeEntryPage() {
   return (
     <div className="flex min-h-[100dvh] bg-muted/40">
       <Sidebar />
-      <main className="flex-1 p-8 overflow-y-auto">
+      <main className="flex-1 overflow-y-auto p-4 pt-[4.5rem] md:p-8 md:pt-8">
         <div className="max-w-2xl mx-auto">
           <div className="mb-6">
             <Button variant="ghost" size="sm" asChild className="-ml-3 mb-2 text-muted-foreground">
@@ -134,7 +134,7 @@ export function EditTimeEntryPage() {
                 <ChevronLeft className="mr-1 h-4 w-4" /> Back to Entries
               </Link>
             </Button>
-            <h1 className="text-3xl font-bold tracking-tight">Edit Time Entry</h1>
+            <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Edit Time Entry</h1>
           </div>
 
           <Card>
@@ -146,8 +146,7 @@ export function EditTimeEntryPage() {
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {/* Client selector */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                     <div className="space-y-2">
                       <label className="text-sm font-medium leading-none">Client</label>
                       <Select value={selectedClientId} onValueChange={handleClientChange}>
@@ -165,7 +164,6 @@ export function EditTimeEntryPage() {
                       </Select>
                     </div>
 
-                    {/* Project selector filtered by client */}
                     <FormField
                       control={form.control}
                       name="projectId"
@@ -200,33 +198,35 @@ export function EditTimeEntryPage() {
                     />
                   </div>
 
-                  <FormField
-                    control={form.control}
-                    name="date"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Date</FormLabel>
-                        <FormControl>
-                          <Input type="date" {...field} data-testid="input-date-edit" className="max-w-[200px]" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                    <FormField
+                      control={form.control}
+                      name="date"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Date</FormLabel>
+                          <FormControl>
+                            <Input type="date" {...field} data-testid="input-date-edit" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
-                  <FormField
-                    control={form.control}
-                    name="hours"
-                    render={({ field }) => (
-                      <FormItem className="max-w-[200px]">
-                        <FormLabel>Hours</FormLabel>
-                        <FormControl>
-                          <Input type="number" step="0.25" min="0.25" max="24" {...field} data-testid="input-hours-edit" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                    <FormField
+                      control={form.control}
+                      name="hours"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Hours</FormLabel>
+                          <FormControl>
+                            <Input type="number" step="0.25" min="0.25" max="24" {...field} data-testid="input-hours-edit" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
 
                   <FormField
                     control={form.control}
@@ -247,14 +247,15 @@ export function EditTimeEntryPage() {
                     )}
                   />
 
-                  <div className="flex justify-end gap-4 pt-4 border-t">
-                    <Button variant="outline" asChild type="button">
+                  <div className="flex flex-col-reverse sm:flex-row justify-end gap-3 pt-4 border-t">
+                    <Button variant="outline" asChild type="button" className="w-full sm:w-auto">
                       <Link href="/time-entries">Cancel</Link>
                     </Button>
                     <Button
                       type="submit"
                       disabled={updateMutation.isPending}
                       data-testid="btn-submit-edit-time"
+                      className="w-full sm:w-auto"
                     >
                       {updateMutation.isPending ? "Saving..." : "Update Entry"}
                     </Button>

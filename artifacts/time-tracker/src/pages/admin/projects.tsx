@@ -13,7 +13,6 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Pencil, Trash2, FolderKanban } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { format } from "date-fns";
 import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -92,12 +91,11 @@ export function AdminProjectsPage() {
         queryClient.invalidateQueries({ queryKey: getListProjectsQueryKey() });
         setProjectToDelete(null);
       },
-      onError: (err: any) => {
-        // Likely failed due to foreign key constraints
-        toast({ 
-          title: "Cannot delete project", 
+      onError: () => {
+        toast({
+          title: "Cannot delete project",
           description: "This project has time entries associated with it. Mark it inactive instead.",
-          variant: "destructive" 
+          variant: "destructive"
         });
         setProjectToDelete(null);
       }
@@ -141,13 +139,13 @@ export function AdminProjectsPage() {
   return (
     <div className="flex min-h-[100dvh] bg-muted/40">
       <Sidebar />
-      <main className="flex-1 p-8 overflow-y-auto">
-        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-8">
+      <main className="flex-1 overflow-y-auto p-4 pt-[4.5rem] md:p-8 md:pt-8">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6 md:mb-8">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Manage Projects</h1>
-            <p className="text-muted-foreground mt-1">Create, edit, and organize client projects.</p>
+            <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Manage Projects</h1>
+            <p className="text-muted-foreground mt-1 text-sm md:text-base">Create, edit, and organize client projects.</p>
           </div>
-          <Button onClick={openCreateModal} data-testid="btn-create-project">
+          <Button onClick={openCreateModal} data-testid="btn-create-project" className="w-full sm:w-auto">
             <Plus className="mr-2 h-4 w-4" /> New Project
           </Button>
         </div>
@@ -156,11 +154,11 @@ export function AdminProjectsPage() {
           <div className="relative w-full overflow-auto">
             <table className="w-full caption-bottom text-sm">
               <thead className="[&_tr]:border-b bg-muted/20">
-                <tr className="border-b transition-colors hover:bg-muted/50">
-                  <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground w-12">Status</th>
+                <tr className="border-b transition-colors">
+                  <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground w-10">Status</th>
                   <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Project Name</th>
-                  <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Client</th>
-                  <th className="h-12 px-4 text-right align-middle font-medium text-muted-foreground">Total Hours</th>
+                  <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground hidden sm:table-cell">Client</th>
+                  <th className="h-12 px-4 text-right align-middle font-medium text-muted-foreground hidden sm:table-cell">Total Hours</th>
                   <th className="h-12 px-4 text-right align-middle font-medium text-muted-foreground">Actions</th>
                 </tr>
               </thead>
@@ -168,10 +166,10 @@ export function AdminProjectsPage() {
                 {isLoading ? (
                   Array.from({ length: 5 }).map((_, i) => (
                     <tr key={i} className="border-b">
-                      <td className="p-4"><Skeleton className="h-4 w-8" /></td>
+                      <td className="p-4"><Skeleton className="h-3 w-3 rounded-full mx-auto" /></td>
                       <td className="p-4"><Skeleton className="h-4 w-48" /></td>
-                      <td className="p-4"><Skeleton className="h-4 w-32" /></td>
-                      <td className="p-4"><Skeleton className="h-4 w-16 ml-auto" /></td>
+                      <td className="p-4 hidden sm:table-cell"><Skeleton className="h-4 w-32" /></td>
+                      <td className="p-4 hidden sm:table-cell"><Skeleton className="h-4 w-16 ml-auto" /></td>
                       <td className="p-4"><Skeleton className="h-8 w-24 ml-auto" /></td>
                     </tr>
                   ))
@@ -179,43 +177,46 @@ export function AdminProjectsPage() {
                   projects.map(project => (
                     <tr key={project.id} className="border-b transition-colors hover:bg-muted/50 group">
                       <td className="p-4 align-middle text-center">
-                        <div 
+                        <div
                           className={`w-3 h-3 rounded-full mx-auto ${project.isActive ? 'bg-green-500' : 'bg-slate-300'}`}
                           title={project.isActive ? "Active" : "Inactive"}
                         />
                       </td>
                       <td className="p-4 align-middle">
                         <div className="font-semibold text-foreground">{project.name}</div>
-                        {project.description && <div className="text-xs text-muted-foreground mt-1 line-clamp-1">{project.description}</div>}
+                        {project.clientName && (
+                          <div className="text-xs text-muted-foreground mt-0.5 sm:hidden">{project.clientName}</div>
+                        )}
+                        {project.description && <div className="text-xs text-muted-foreground mt-0.5 line-clamp-1 hidden sm:block">{project.description}</div>}
                       </td>
-                      <td className="p-4 align-middle font-medium text-muted-foreground">{project.clientName || '—'}</td>
-                      <td className="p-4 align-middle text-right font-medium">{Number(project.totalHours ?? 0).toFixed(1)}</td>
+                      <td className="p-4 align-middle font-medium text-muted-foreground hidden sm:table-cell">{project.clientName || '—'}</td>
+                      <td className="p-4 align-middle text-right font-medium hidden sm:table-cell">{Number(project.totalHours ?? 0).toFixed(1)}</td>
                       <td className="p-4 align-middle text-right">
-                        <div className="flex items-center justify-end gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
-                            className="text-muted-foreground"
-                            onClick={() => toggleStatusMutation.mutate({ 
-                              id: project.id, 
-                              data: { isActive: !project.isActive } 
+                        <div className="flex items-center justify-end gap-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-muted-foreground text-xs px-2 hidden sm:inline-flex"
+                            onClick={() => toggleStatusMutation.mutate({
+                              id: project.id,
+                              data: { isActive: !project.isActive }
                             })}
                             data-testid={`btn-toggle-project-${project.id}`}
                           >
                             {project.isActive ? 'Deactivate' : 'Activate'}
                           </Button>
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
+                          <Button
+                            variant="ghost"
+                            size="icon"
                             className="h-8 w-8 text-muted-foreground hover:text-primary"
                             onClick={() => openEditModal(project)}
                             data-testid={`btn-edit-project-${project.id}`}
                           >
                             <Pencil className="h-4 w-4" />
                           </Button>
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
+                          <Button
+                            variant="ghost"
+                            size="icon"
                             className="h-8 w-8 text-muted-foreground hover:text-destructive"
                             onClick={() => setProjectToDelete(project.id)}
                             data-testid={`btn-delete-project-${project.id}`}
@@ -253,7 +254,7 @@ export function AdminProjectsPage() {
               {editingProject ? "Update the details for this project." : "Add a new project for consultants to log time against."}
             </DialogDescription>
           </DialogHeader>
-          
+
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4">
               <FormField
@@ -269,7 +270,7 @@ export function AdminProjectsPage() {
                   </FormItem>
                 )}
               />
-              
+
               <FormField
                 control={form.control}
                 name="clientId"
@@ -332,7 +333,7 @@ export function AdminProjectsPage() {
                   </FormItem>
                 )}
               />
-              
+
               <div className="flex justify-end gap-3 pt-4">
                 <Button type="button" variant="outline" onClick={() => setIsModalOpen(false)}>
                   Cancel
@@ -356,7 +357,7 @@ export function AdminProjectsPage() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel data-testid="btn-cancel-delete">Cancel</AlertDialogCancel>
-            <AlertDialogAction 
+            <AlertDialogAction
               onClick={() => projectToDelete && deleteMutation.mutate({ id: projectToDelete })}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               disabled={deleteMutation.isPending}

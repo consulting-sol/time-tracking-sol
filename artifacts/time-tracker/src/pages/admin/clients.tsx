@@ -120,13 +120,13 @@ export function AdminClientsPage() {
   return (
     <div className="flex min-h-[100dvh] bg-muted/40">
       <Sidebar />
-      <main className="flex-1 p-8 overflow-y-auto">
-        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-8">
+      <main className="flex-1 overflow-y-auto p-4 pt-[4.5rem] md:p-8 md:pt-8">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6 md:mb-8">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Manage Clients</h1>
-            <p className="text-muted-foreground mt-1">Create and manage client organisations.</p>
+            <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Manage Clients</h1>
+            <p className="text-muted-foreground mt-1 text-sm md:text-base">Create and manage client organisations.</p>
           </div>
-          <Button onClick={openCreateModal} data-testid="btn-create-client">
+          <Button onClick={openCreateModal} data-testid="btn-create-client" className="w-full sm:w-auto">
             <Plus className="mr-2 h-4 w-4" /> New Client
           </Button>
         </div>
@@ -137,9 +137,9 @@ export function AdminClientsPage() {
               <thead className="[&_tr]:border-b bg-muted/20">
                 <tr className="border-b transition-colors">
                   <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Client Name</th>
-                  <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Description</th>
-                  <th className="h-12 px-4 text-right align-middle font-medium text-muted-foreground">Projects</th>
-                  <th className="h-12 px-4 text-right align-middle font-medium text-muted-foreground">Added</th>
+                  <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground hidden md:table-cell">Description</th>
+                  <th className="h-12 px-4 text-right align-middle font-medium text-muted-foreground hidden sm:table-cell">Projects</th>
+                  <th className="h-12 px-4 text-right align-middle font-medium text-muted-foreground hidden sm:table-cell">Added</th>
                   <th className="h-12 px-4 text-right align-middle font-medium text-muted-foreground">Actions</th>
                 </tr>
               </thead>
@@ -148,9 +148,9 @@ export function AdminClientsPage() {
                   Array.from({ length: 4 }).map((_, i) => (
                     <tr key={i} className="border-b">
                       <td className="p-4"><Skeleton className="h-4 w-40" /></td>
-                      <td className="p-4"><Skeleton className="h-4 w-64" /></td>
-                      <td className="p-4"><Skeleton className="h-4 w-10 ml-auto" /></td>
-                      <td className="p-4"><Skeleton className="h-4 w-24 ml-auto" /></td>
+                      <td className="p-4 hidden md:table-cell"><Skeleton className="h-4 w-64" /></td>
+                      <td className="p-4 hidden sm:table-cell"><Skeleton className="h-4 w-10 ml-auto" /></td>
+                      <td className="p-4 hidden sm:table-cell"><Skeleton className="h-4 w-24 ml-auto" /></td>
                       <td className="p-4"><Skeleton className="h-8 w-20 ml-auto" /></td>
                     </tr>
                   ))
@@ -162,24 +162,29 @@ export function AdminClientsPage() {
                           <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
                             <Building2 className="h-4 w-4 text-primary" />
                           </div>
-                          <span className="font-semibold">{client.name}</span>
+                          <div className="min-w-0">
+                            <span className="font-semibold block">{client.name}</span>
+                            {client.description && (
+                              <span className="text-xs text-muted-foreground block md:hidden line-clamp-1 mt-0.5">{client.description}</span>
+                            )}
+                          </div>
                         </div>
                       </td>
-                      <td className="p-4 align-middle text-muted-foreground">
+                      <td className="p-4 align-middle text-muted-foreground hidden md:table-cell">
                         {client.description ? (
                           <span className="line-clamp-1">{client.description}</span>
                         ) : (
                           <span className="text-muted-foreground/40 italic">No description</span>
                         )}
                       </td>
-                      <td className="p-4 align-middle text-right font-medium">
+                      <td className="p-4 align-middle text-right font-medium hidden sm:table-cell">
                         {Number(client.projectCount)}
                       </td>
-                      <td className="p-4 align-middle text-right text-muted-foreground whitespace-nowrap">
+                      <td className="p-4 align-middle text-right text-muted-foreground whitespace-nowrap hidden sm:table-cell">
                         {format(new Date(client.createdAt), "MMM d, yyyy")}
                       </td>
                       <td className="p-4 align-middle text-right">
-                        <div className="flex items-center justify-end gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                        <div className="flex items-center justify-end gap-1">
                           <Button
                             variant="ghost"
                             size="icon"

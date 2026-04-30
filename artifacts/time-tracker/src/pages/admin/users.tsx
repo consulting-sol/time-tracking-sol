@@ -116,13 +116,13 @@ export function AdminUsersPage() {
   return (
     <div className="flex min-h-[100dvh] bg-muted/40">
       <Sidebar />
-      <main className="flex-1 p-8 overflow-y-auto">
-        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-8">
+      <main className="flex-1 overflow-y-auto p-4 pt-[4.5rem] md:p-8 md:pt-8">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6 md:mb-8">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Team Members</h1>
-            <p className="text-muted-foreground mt-1">Manage consultants and administrators.</p>
+            <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Team Members</h1>
+            <p className="text-muted-foreground mt-1 text-sm md:text-base">Manage consultants and administrators.</p>
           </div>
-          <Button onClick={() => setIsCreateOpen(true)} data-testid="btn-invite-user">
+          <Button onClick={() => setIsCreateOpen(true)} data-testid="btn-invite-user" className="w-full sm:w-auto">
             <Plus className="mr-2 h-4 w-4" /> Add Team Member
           </Button>
         </div>
@@ -131,11 +131,11 @@ export function AdminUsersPage() {
           <div className="relative w-full overflow-auto">
             <table className="w-full caption-bottom text-sm">
               <thead className="[&_tr]:border-b bg-muted/20">
-                <tr className="border-b transition-colors hover:bg-muted/50">
+                <tr className="border-b transition-colors">
                   <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Name</th>
-                  <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Email</th>
+                  <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground hidden sm:table-cell">Email</th>
                   <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Role</th>
-                  <th className="h-12 px-4 text-right align-middle font-medium text-muted-foreground">Total Hours</th>
+                  <th className="h-12 px-4 text-right align-middle font-medium text-muted-foreground hidden sm:table-cell">Total Hours</th>
                   <th className="h-12 px-4 text-right align-middle font-medium text-muted-foreground">Actions</th>
                 </tr>
               </thead>
@@ -144,31 +144,34 @@ export function AdminUsersPage() {
                   Array.from({ length: 5 }).map((_, i) => (
                     <tr key={i} className="border-b">
                       <td className="p-4"><Skeleton className="h-4 w-32" /></td>
-                      <td className="p-4"><Skeleton className="h-4 w-48" /></td>
+                      <td className="p-4 hidden sm:table-cell"><Skeleton className="h-4 w-48" /></td>
                       <td className="p-4"><Skeleton className="h-6 w-20" /></td>
-                      <td className="p-4"><Skeleton className="h-4 w-12 ml-auto" /></td>
+                      <td className="p-4 hidden sm:table-cell"><Skeleton className="h-4 w-12 ml-auto" /></td>
                       <td className="p-4"><Skeleton className="h-8 w-24 ml-auto" /></td>
                     </tr>
                   ))
                 ) : users && users.length > 0 ? (
                   users.map(user => (
                     <tr key={user.clerkId} className="border-b transition-colors hover:bg-muted/50 group">
-                      <td className="p-4 align-middle font-medium text-foreground">
-                        {user.displayName || (user.firstName ? `${user.firstName} ${user.lastName || ''}` : '—')}
+                      <td className="p-4 align-middle">
+                        <div className="font-medium text-foreground">
+                          {user.displayName || (user.firstName ? `${user.firstName} ${user.lastName || ''}` : '—')}
+                        </div>
+                        <div className="text-xs text-muted-foreground sm:hidden mt-0.5">{user.email}</div>
                       </td>
-                      <td className="p-4 align-middle text-muted-foreground">{user.email}</td>
+                      <td className="p-4 align-middle text-muted-foreground hidden sm:table-cell">{user.email}</td>
                       <td className="p-4 align-middle">
                         <Badge variant={user.role === 'admin' ? 'default' : 'secondary'} className="capitalize font-normal tracking-wide">
                           {user.role}
                         </Badge>
                       </td>
-                      <td className="p-4 align-middle text-right font-medium">{Number(user.totalHours ?? 0).toFixed(1)}</td>
+                      <td className="p-4 align-middle text-right font-medium hidden sm:table-cell">{Number(user.totalHours ?? 0).toFixed(1)}</td>
                       <td className="p-4 align-middle text-right">
-                        <div className="flex items-center justify-end gap-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                        <div className="flex items-center justify-end gap-2">
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="text-muted-foreground"
+                            className="text-muted-foreground hidden sm:inline-flex text-xs px-2"
                             onClick={() => toggleRole(user.clerkId, user.role)}
                             disabled={updateRoleMutation.isPending}
                             data-testid={`btn-toggle-role-${user.clerkId}`}
@@ -178,6 +181,17 @@ export function AdminUsersPage() {
                             ) : (
                               <><ShieldAlert className="mr-1.5 h-3.5 w-3.5 text-orange-500" /> Make Admin</>
                             )}
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 sm:hidden text-muted-foreground"
+                            onClick={() => toggleRole(user.clerkId, user.role)}
+                            disabled={updateRoleMutation.isPending}
+                            data-testid={`btn-toggle-role-mobile-${user.clerkId}`}
+                            title={user.role === 'admin' ? 'Make Consultant' : 'Make Admin'}
+                          >
+                            {user.role === 'admin' ? <Shield className="h-4 w-4" /> : <ShieldAlert className="h-4 w-4 text-orange-500" />}
                           </Button>
                           <Button
                             variant="ghost"

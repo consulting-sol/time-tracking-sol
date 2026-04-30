@@ -93,25 +93,27 @@ export function AdminTimeEntriesPage() {
   return (
     <div className="flex min-h-[100dvh] bg-muted/40">
       <Sidebar />
-      <main className="flex-1 p-8 overflow-y-auto">
-        <div className="flex items-start justify-between mb-8">
+      <main className="flex-1 overflow-y-auto p-4 pt-[4.5rem] md:p-8 md:pt-8">
+        <div className="flex items-start justify-between mb-6 md:mb-8 gap-4">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Organization Time Entries</h1>
-            <p className="text-muted-foreground mt-1">View and filter all logged hours across the organization.</p>
+            <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Organization Time Entries</h1>
+            <p className="text-muted-foreground mt-1 text-sm md:text-base hidden sm:block">View and filter all logged hours across the organization.</p>
           </div>
           <Button
             onClick={exportToExcel}
             disabled={!entries || entries.length === 0}
-            className="gap-2"
+            className="gap-2 shrink-0"
+            size="sm"
             data-testid="btn-export-excel"
           >
             <Download className="h-4 w-4" />
-            Export to Excel
+            <span className="hidden sm:inline">Export to Excel</span>
+            <span className="sm:hidden">Export</span>
           </Button>
         </div>
 
         <Card className="p-4 mb-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
             <div>
               <label className="text-sm font-medium mb-1.5 block">Project</label>
               <Select value={projectIdFilter} onValueChange={setProjectIdFilter}>
@@ -176,14 +178,55 @@ export function AdminTimeEntriesPage() {
         )}
 
         <Card>
-          <div className="relative w-full overflow-auto">
+          {/* Mobile: card list */}
+          <div className="block sm:hidden">
+            {isLoading ? (
+              Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="p-4 border-b last:border-b-0 space-y-2">
+                  <Skeleton className="h-4 w-32" />
+                  <Skeleton className="h-4 w-48" />
+                  <Skeleton className="h-4 w-full" />
+                </div>
+              ))
+            ) : entries && entries.length > 0 ? (
+              (groupBy === "none" ? entries : grouped.flatMap(g => g.entries)).map(entry => (
+                <div key={entry.id} className="p-4 border-b last:border-b-0">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex-1 min-w-0">
+                      <div className="font-medium truncate">{entry.projectName}</div>
+                      <div className="text-xs text-muted-foreground mt-0.5">
+                        {entry.userDisplayName || "Unknown"} · {format(new Date(entry.date), "MMM d, yyyy")}
+                      </div>
+                      {entry.description && (
+                        <div className="text-sm text-muted-foreground mt-1 line-clamp-2">{entry.description}</div>
+                      )}
+                    </div>
+                    <span className="font-bold shrink-0">{Number(entry.hours).toFixed(1)}h</span>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="p-12 text-center text-muted-foreground">
+                <div className="flex flex-col items-center justify-center">
+                  <div className="bg-muted p-3 rounded-full mb-4">
+                    <Clock className="h-6 w-6" />
+                  </div>
+                  <p className="text-base font-medium text-foreground mb-1">No time entries found</p>
+                  <p className="text-sm">Try adjusting your filters.</p>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Desktop: table */}
+          <div className="hidden sm:block relative w-full overflow-auto">
             <table className="w-full caption-bottom text-sm">
               <thead className="[&_tr]:border-b bg-muted/20">
                 <tr className="border-b transition-colors">
                   <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Date</th>
                   {showConsultantCol && <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Consultant</th>}
                   <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Project</th>
-                  {showClientCol && <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Client</th>}
+                  {showClientCol && <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground hidden lg:table-cell">Client</th>}
                   <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Description</th>
                   <th className="h-12 px-4 text-right align-middle font-medium text-muted-foreground">Hours</th>
                 </tr>
@@ -195,7 +238,7 @@ export function AdminTimeEntriesPage() {
                       <td className="p-4"><Skeleton className="h-4 w-24" /></td>
                       <td className="p-4"><Skeleton className="h-4 w-32" /></td>
                       <td className="p-4"><Skeleton className="h-4 w-32" /></td>
-                      <td className="p-4"><Skeleton className="h-4 w-32" /></td>
+                      <td className="p-4 hidden lg:table-cell"><Skeleton className="h-4 w-32" /></td>
                       <td className="p-4"><Skeleton className="h-4 w-64" /></td>
                       <td className="p-4"><Skeleton className="h-4 w-10 ml-auto" /></td>
                     </tr>
@@ -207,7 +250,7 @@ export function AdminTimeEntriesPage() {
                         <td className="p-4 align-middle whitespace-nowrap">{format(new Date(entry.date), "MMM d, yyyy")}</td>
                         <td className="p-4 align-middle font-medium">{entry.userDisplayName || "Unknown"}</td>
                         <td className="p-4 align-middle">{entry.projectName}</td>
-                        <td className="p-4 align-middle text-muted-foreground">{projectClientMap[entry.projectId] ?? "—"}</td>
+                        <td className="p-4 align-middle text-muted-foreground hidden lg:table-cell">{projectClientMap[entry.projectId] ?? "—"}</td>
                         <td className="p-4 align-middle text-muted-foreground">{entry.description}</td>
                         <td className="p-4 align-middle text-right font-bold">{Number(entry.hours).toFixed(1)}</td>
                       </tr>
@@ -231,7 +274,7 @@ export function AdminTimeEntriesPage() {
                             <td className="p-4 align-middle whitespace-nowrap">{format(new Date(entry.date), "MMM d, yyyy")}</td>
                             {showConsultantCol && <td className="p-4 align-middle font-medium">{entry.userDisplayName || "Unknown"}</td>}
                             <td className="p-4 align-middle">{entry.projectName}</td>
-                            {showClientCol && <td className="p-4 align-middle text-muted-foreground">{projectClientMap[entry.projectId] ?? "—"}</td>}
+                            {showClientCol && <td className="p-4 align-middle text-muted-foreground hidden lg:table-cell">{projectClientMap[entry.projectId] ?? "—"}</td>}
                             <td className="p-4 align-middle text-muted-foreground">{entry.description}</td>
                             <td className="p-4 align-middle text-right font-bold">{Number(entry.hours).toFixed(1)}</td>
                           </tr>

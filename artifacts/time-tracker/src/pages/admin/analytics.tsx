@@ -69,77 +69,77 @@ export function AdminAnalyticsPage() {
   return (
     <div className="flex min-h-[100dvh] bg-muted/40">
       <Sidebar />
-      <main className="flex-1 p-8 overflow-y-auto">
-        <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-8">
+      <main className="flex-1 overflow-y-auto p-4 pt-[4.5rem] md:p-8 md:pt-8">
+        <div className="flex flex-col gap-4 mb-6 md:mb-8">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Organization Analytics</h1>
-            <p className="text-muted-foreground mt-1">Metrics across all projects and consultants.</p>
+            <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Organization Analytics</h1>
+            <p className="text-muted-foreground mt-1 text-sm md:text-base">Metrics across all projects and consultants.</p>
           </div>
 
-          <div className="flex items-center gap-2">
-            <div className="flex items-center gap-2 bg-background border rounded-md px-3 py-1">
-              <span className="text-sm font-medium">Filter Range:</span>
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+            <span className="text-sm font-medium shrink-0">Filter Range:</span>
+            <div className="flex items-center gap-2 bg-background border rounded-md px-3 py-1 w-full sm:w-auto">
               <Input
                 type="date"
                 value={dateFrom}
                 onChange={e => setDateFrom(e.target.value)}
-                className="h-8 border-0 shadow-none focus-visible:ring-0 w-auto px-1"
+                className="h-8 border-0 shadow-none focus-visible:ring-0 px-1 min-w-0 flex-1 sm:flex-none sm:w-auto"
                 data-testid="input-date-from"
               />
-              <span className="text-muted-foreground">–</span>
+              <span className="text-muted-foreground shrink-0">–</span>
               <Input
                 type="date"
                 value={dateTo}
                 onChange={e => setDateTo(e.target.value)}
-                className="h-8 border-0 shadow-none focus-visible:ring-0 w-auto px-1"
+                className="h-8 border-0 shadow-none focus-visible:ring-0 px-1 min-w-0 flex-1 sm:flex-none sm:w-auto"
                 data-testid="input-date-to"
               />
             </div>
           </div>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-8">
+        <div className="grid gap-4 grid-cols-2 lg:grid-cols-4 mb-6 md:mb-8">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Organization Hours</CardTitle>
-              <Clock className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-xs sm:text-sm font-medium">Total Hours</CardTitle>
+              <Clock className="h-4 w-4 text-muted-foreground shrink-0" />
             </CardHeader>
             <CardContent>
               {isLoadingSummary ? <Skeleton className="h-7 w-20" /> : (
-                <div className="text-2xl font-bold">{Number(summary?.totalHours ?? 0).toFixed(1)}</div>
+                <div className="text-xl sm:text-2xl font-bold">{Number(summary?.totalHours ?? 0).toFixed(1)}</div>
               )}
             </CardContent>
           </Card>
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Entries Logged</CardTitle>
-              <List className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-xs sm:text-sm font-medium">Entries Logged</CardTitle>
+              <List className="h-4 w-4 text-muted-foreground shrink-0" />
             </CardHeader>
             <CardContent>
               {isLoadingSummary ? <Skeleton className="h-7 w-16" /> : (
-                <div className="text-2xl font-bold">{summary?.totalEntries || 0}</div>
+                <div className="text-xl sm:text-2xl font-bold">{summary?.totalEntries || 0}</div>
               )}
             </CardContent>
           </Card>
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Active Projects</CardTitle>
-              <FolderKanban className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-xs sm:text-sm font-medium">Active Projects</CardTitle>
+              <FolderKanban className="h-4 w-4 text-muted-foreground shrink-0" />
             </CardHeader>
             <CardContent>
               {isLoadingSummary ? <Skeleton className="h-7 w-16" /> : (
-                <div className="text-2xl font-bold">{summary?.totalProjects || 0}</div>
+                <div className="text-xl sm:text-2xl font-bold">{summary?.totalProjects || 0}</div>
               )}
             </CardContent>
           </Card>
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Active Consultants</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-xs sm:text-sm font-medium">Active Consultants</CardTitle>
+              <Users className="h-4 w-4 text-muted-foreground shrink-0" />
             </CardHeader>
             <CardContent>
               {isLoadingSummary ? <Skeleton className="h-7 w-16" /> : (
-                <div className="text-2xl font-bold">{summary?.totalConsultants || 0}</div>
+                <div className="text-xl sm:text-2xl font-bold">{summary?.totalConsultants || 0}</div>
               )}
             </CardContent>
           </Card>
@@ -148,13 +148,13 @@ export function AdminAnalyticsPage() {
         <Card>
           <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <CardTitle>Hours Breakdown</CardTitle>
-            <div className="flex items-center gap-1 bg-muted rounded-lg p-1 w-fit">
+            <div className="flex items-center gap-1 bg-muted rounded-lg p-1 w-full sm:w-fit overflow-x-auto">
               {GROUP_OPTIONS.map(opt => (
                 <button
                   key={opt.value}
                   onClick={() => setGroupBy(opt.value)}
                   data-testid={`btn-group-${opt.value}`}
-                  className={`px-3 py-1.5 text-sm font-medium rounded-md transition-all ${
+                  className={`px-3 py-1.5 text-xs sm:text-sm font-medium rounded-md transition-all whitespace-nowrap flex-1 sm:flex-none ${
                     groupBy === opt.value
                       ? "bg-primary text-primary-foreground shadow-sm"
                       : "text-muted-foreground hover:text-foreground"
@@ -171,12 +171,12 @@ export function AdminAnalyticsPage() {
                 <Skeleton className="h-[300px] w-full" />
               </div>
             ) : chartData.length > 0 ? (
-              <div style={{ height: Math.max(260, chartData.length * 44) }} className="w-full">
+              <div style={{ height: Math.max(200, chartData.length * 44) }} className="w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart
                     layout="vertical"
                     data={chartData}
-                    margin={{ top: 4, right: 56, left: 8, bottom: 4 }}
+                    margin={{ top: 4, right: 48, left: 4, bottom: 4 }}
                   >
                     <XAxis
                       type="number"
@@ -188,12 +188,12 @@ export function AdminAnalyticsPage() {
                     <YAxis
                       type="category"
                       dataKey="label"
-                      width={160}
-                      fontSize={12}
+                      width={120}
+                      fontSize={11}
                       tickLine={false}
                       axisLine={false}
                       tick={{ fill: "#374151" }}
-                      tickFormatter={(v: string) => v.length > 22 ? v.slice(0, 21) + "…" : v}
+                      tickFormatter={(v: string) => v.length > 18 ? v.slice(0, 17) + "…" : v}
                     />
                     <Tooltip
                       cursor={{ fill: "rgba(0,0,0,0.05)" }}
@@ -206,7 +206,7 @@ export function AdminAnalyticsPage() {
                       <LabelList
                         dataKey="totalHours"
                         position="right"
-                        fontSize={12}
+                        fontSize={11}
                         formatter={(v: number) => `${Number(v).toFixed(1)}h`}
                       />
                     </Bar>
@@ -214,7 +214,7 @@ export function AdminAnalyticsPage() {
                 </ResponsiveContainer>
               </div>
             ) : (
-              <div className="h-[340px] flex items-center justify-center text-muted-foreground border border-dashed rounded-lg">
+              <div className="h-[200px] flex items-center justify-center text-muted-foreground border border-dashed rounded-lg text-sm">
                 No data available for this view
               </div>
             )}
@@ -229,7 +229,7 @@ export function AdminAnalyticsPage() {
                   {groupBy === "client" ? "Client Summary" : "Project Summary"}
                 </CardTitle>
               </CardHeader>
-              <CardContent className="p-0">
+              <div className="relative w-full overflow-auto">
                 <table className="w-full text-sm">
                   <thead className="bg-muted/30">
                     <tr className="border-b">
@@ -237,9 +237,9 @@ export function AdminAnalyticsPage() {
                         {groupBy === "client" ? "Client" : "Project"}
                       </th>
                       {groupBy === "project" && (
-                        <th className="h-10 px-4 text-left font-medium text-muted-foreground">Client</th>
+                        <th className="h-10 px-4 text-left font-medium text-muted-foreground hidden sm:table-cell">Client</th>
                       )}
-                      <th className="h-10 px-4 text-right font-medium text-muted-foreground">Entries</th>
+                      <th className="h-10 px-4 text-right font-medium text-muted-foreground hidden sm:table-cell">Entries</th>
                       <th className="h-10 px-4 text-right font-medium text-muted-foreground">Total Hours</th>
                     </tr>
                   </thead>
@@ -248,8 +248,8 @@ export function AdminAnalyticsPage() {
                       ? projectHours.map(r => (
                         <tr key={r.projectId} className="border-b last:border-0 hover:bg-muted/30 transition-colors">
                           <td className="px-4 py-3 font-medium">{r.projectName}</td>
-                          <td className="px-4 py-3 text-muted-foreground">{r.clientName || "—"}</td>
-                          <td className="px-4 py-3 text-right text-muted-foreground">{r.entryCount}</td>
+                          <td className="px-4 py-3 text-muted-foreground hidden sm:table-cell">{r.clientName || "—"}</td>
+                          <td className="px-4 py-3 text-right text-muted-foreground hidden sm:table-cell">{r.entryCount}</td>
                           <td className="px-4 py-3 text-right font-bold">{Number(r.totalHours).toFixed(1)}h</td>
                         </tr>
                       ))
@@ -262,7 +262,7 @@ export function AdminAnalyticsPage() {
                     }
                   </tbody>
                 </table>
-              </CardContent>
+              </div>
             </Card>
           </div>
         )}
