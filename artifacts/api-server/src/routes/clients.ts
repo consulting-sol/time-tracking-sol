@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { db, clientsTable, projectsTable } from "@workspace/db";
 import { eq, sql } from "drizzle-orm";
-import { requireAdmin } from "../middlewares/requireAuth";
+import { requireAuth, requireAdmin } from "../middlewares/requireAuth";
 import { z } from "zod";
 
 const CreateClientBody = z.object({
@@ -16,7 +16,7 @@ const UpdateClientBody = z.object({
 
 const router = Router();
 
-router.get("/clients", requireAdmin, async (req, res): Promise<void> => {
+router.get("/clients", requireAuth, async (req, res): Promise<void> => {
   const clients = await db
     .select({
       id: clientsTable.id,
@@ -46,7 +46,7 @@ router.post("/clients", requireAdmin, async (req, res): Promise<void> => {
   res.status(201).json({ ...client, projectCount: 0 });
 });
 
-router.get("/clients/:id", requireAdmin, async (req, res): Promise<void> => {
+router.get("/clients/:id", requireAuth, async (req, res): Promise<void> => {
   const id = Number(req.params.id);
   if (isNaN(id)) { res.status(400).json({ error: "Invalid id" }); return; }
 
