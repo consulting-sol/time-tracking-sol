@@ -3,6 +3,7 @@ import { Switch, Route, useLocation, Router as WouterRouter, Redirect } from 'wo
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider, useAuth } from "./hooks/use-auth";
+import { TimerProvider } from "./hooks/use-timer";
 import { DashboardPage } from "./pages/dashboard";
 import { TimeEntriesPage } from "./pages/time-entries";
 import { NewTimeEntryPage } from "./pages/new-time-entry";
@@ -63,8 +64,10 @@ function App() {
     <WouterRouter base={basePath}>
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
-          <Routes />
-          <Toaster />
+          <TimerProvider>
+            <Routes />
+            <Toaster />
+          </TimerProvider>
         </AuthProvider>
       </QueryClientProvider>
     </WouterRouter>

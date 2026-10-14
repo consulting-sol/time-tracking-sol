@@ -6,6 +6,7 @@ import { useGetMe, getGetMeQueryKey } from "@workspace/api-client-react";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
+import { TimerWidget } from "@/components/timer-widget";
 
 interface SidebarProps extends React.HTMLAttributes<HTMLDivElement> {}
 
@@ -83,6 +84,8 @@ function NavContent({ onNavigate }: { onNavigate?: () => void }) {
           </div>
         )}
       </div>
+
+      <TimerWidget onNavigate={onNavigate} className="mb-3" />
 
       <div className="p-4 border-t border-sidebar-border flex items-center gap-3">
         <div className="flex flex-col overflow-hidden flex-1">

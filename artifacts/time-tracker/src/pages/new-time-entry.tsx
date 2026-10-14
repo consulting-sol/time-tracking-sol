@@ -14,10 +14,11 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useLocation, Link } from "wouter";
+import { useLocation, Link, useSearch } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, TimerIcon } from "lucide-react";
+import { formatElapsed } from "@/hooks/use-timer";
 import { format } from "date-fns";
 
 const NO_CLIENT = "__none__";
@@ -35,6 +36,16 @@ export function NewTimeEntryPage() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const [selectedClientId, setSelectedClientId] = useState<string>("");
+  const search = useSearch();
+  const { prefillHours, timerSeconds } = useMemo(() => {
+    const params = new URLSearchParams(search);
+    const h = Number(params.get("hours"));
+    const t = Number(params.get("timer"));
+    return {
+      prefillHours: Number.isFinite(h) && h > 0 ? Math.min(24, h) : null,
+      timerSeconds: Number.isFinite(t) && t > 0 ? t : null,
+    };
+  }, [search]);
 
   const { data: clients } = useListClients({ query: { queryKey: getListClientsQueryKey() } });
   const { data: projects } = useListProjects(
@@ -54,7 +65,7 @@ export function NewTimeEntryPage() {
     defaultValues: {
       projectId: 0,
       date: format(new Date(), "yyyy-MM-dd"),
-      hours: 1,
+      hours: prefillHours ?? 1,
       description: "",
     },
   });
@@ -108,6 +119,15 @@ export function NewTimeEntryPage() {
               <CardDescription>Fill out the form below to log your time.</CardDescription>
             </CardHeader>
             <CardContent>
+              {timerSeconds !== null && (
+                <div className="mb-6 flex items-start gap-3 rounded-md border border-primary/30 bg-primary/5 p-3 text-sm" data-testid="timer-hint">
+                  <TimerIcon className="h-4 w-4 mt-0.5 text-primary shrink-0" />
+                  <div>
+                    <span className="font-medium">Timer stopped at {formatElapsed(timerSeconds)}.</span>{" "}
+                    <span className="text-muted-foreground">Hours were rounded to the nearest quarter hour – adjust if needed.</span>
+                  </div>
+                </div>
+              )}
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
 
