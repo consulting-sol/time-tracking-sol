@@ -5,7 +5,8 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Link } from "wouter";
-import { Plus, Pencil, Trash2, Filter, Clock } from "lucide-react";
+import { Plus, Pencil, Trash2, Filter, Clock, FileSpreadsheet } from "lucide-react";
+import { ArbeitsrapportExportDialog } from "@/components/arbeitsrapport-export-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { format } from "date-fns";
 import { queryClient } from "@/lib/queryClient";
@@ -25,6 +26,7 @@ export function TimeEntriesPage() {
   const { toast } = useToast();
   const [projectIdFilter, setProjectIdFilter] = useState<string>("all");
   const [entryToDelete, setEntryToDelete] = useState<number | null>(null);
+  const [exportOpen, setExportOpen] = useState(false);
 
   const { data: me } = useGetMe({ query: { queryKey: getGetMeQueryKey() } });
 
@@ -46,6 +48,12 @@ export function TimeEntriesPage() {
         enabled: !!me,
       }
     }
+  );
+
+  const allParams = me ? { userId: me.clerkId } : {};
+  const { data: allEntries } = useListTimeEntries(
+    allParams,
+    { query: { queryKey: getListTimeEntriesQueryKey(allParams), enabled: !!me } }
   );
 
   const deleteMutation = useDeleteTimeEntry({
@@ -83,12 +91,38 @@ export function TimeEntriesPage() {
             <h1 className="text-2xl md:text-3xl font-bold tracking-tight">My Time Entries</h1>
             <p className="text-muted-foreground mt-1 text-sm md:text-base">View and manage your logged hours.</p>
           </div>
-          <Button asChild className="w-full sm:w-auto">
-            <Link href="/time-entries/new" data-testid="btn-entries-new">
-              <Plus className="mr-2 h-4 w-4" /> Log Time
-            </Link>
-          </Button>
+          <div className="flex flex-col sm:flex-row gap-2">
+            <Button
+              variant="outline"
+              className="w-full sm:w-auto"
+              onClick={() => setExportOpen(true)}
+              disabled={!allEntries || allEntries.length === 0}
+              data-testid="btn-entries-export"
+            >
+              <FileSpreadsheet className="mr-2 h-4 w-4" /> Export Arbeitsrapport
+            </Button>
+            <Button asChild className="w-full sm:w-auto">
+              <Link href="/time-entries/new" data-testid="btn-entries-new">
+                <Plus className="mr-2 h-4 w-4" /> Log Time
+              </Link>
+            </Button>
+          </div>
         </div>
+
+        <ArbeitsrapportExportDialog
+          open={exportOpen}
+          onOpenChange={setExportOpen}
+          entries={allEntries?.map(e => ({
+            date: e.date,
+            hours: Number(e.hours),
+            description: e.description ?? "",
+            projectName: e.projectName,
+            projectId: e.projectId,
+          }))}
+          projects={projects}
+          studentName={[me?.firstName, me?.lastName].filter(Boolean).join(" ") || me?.email || ""}
+          defaultProjectId={projectIdFilter}
+        />
 
         <div className="flex items-center gap-2 mb-6 max-w-xs">
           <Filter className="h-4 w-4 text-muted-foreground shrink-0" />

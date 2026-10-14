@@ -53,3 +53,4 @@ Thumbs.db
 .env.local
 .vercel
 _to_delete/
+.Rhistory

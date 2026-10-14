@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
-import * as XLSX from "xlsx";
+import { exportEntriesTable } from "@/lib/excel-export";
+import { useToast } from "@/hooks/use-toast";
 import { useListTimeEntries, getListTimeEntriesQueryKey, useListProjects, getListProjectsQueryKey, useListUsers, getListUsersQueryKey } from "@workspace/api-client-react";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Card } from "@/components/ui/card";
@@ -13,6 +14,8 @@ import { Clock, Download } from "lucide-react";
 type GroupBy = "none" | "project" | "client" | "consultant";
 
 export function AdminTimeEntriesPage() {
+  const { toast } = useToast();
+  const [exporting, setExporting] = useState(false);
   const [projectIdFilter, setProjectIdFilter] = useState<string>("all");
   const [userIdFilter, setUserIdFilter] = useState<string>("all");
   const [dateFrom, setDateFrom] = useState<string>("");
@@ -72,22 +75,37 @@ export function AdminTimeEntriesPage() {
   const showConsultantCol = groupBy !== "consultant";
   const colCount = showClientCol && showConsultantCol ? 6 : 5;
 
-  function exportToExcel() {
+  async function exportToExcel() {
     if (!entries || entries.length === 0) return;
-    const rows = entries.map(e => ({
-      Date: format(new Date(e.date), "yyyy-MM-dd"),
-      Consultant: e.userDisplayName || "Unknown",
-      Project: e.projectName ?? "",
-      Client: projectClientMap[e.projectId] ?? "",
-      Description: e.description ?? "",
-      Hours: Number(e.hours),
-    }));
-    const ws = XLSX.utils.json_to_sheet(rows);
-    ws["!cols"] = [{ wch: 12 }, { wch: 20 }, { wch: 28 }, { wch: 20 }, { wch: 40 }, { wch: 8 }];
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Time Entries");
-    const filename = `oikos-solar-time-entries${dateFrom || dateTo ? `-${dateFrom || ""}${dateTo ? `_${dateTo}` : ""}` : ""}.xlsx`;
-    XLSX.writeFile(wb, filename);
+    setExporting(true);
+    try {
+      const rows = (groupBy === "none" ? entries : grouped.flatMap(g => g.entries)).map(e => ({
+        date: e.date,
+        hours: Number(e.hours),
+        description: e.description ?? "",
+        projectName: e.projectName ?? "",
+        clientName: projectClientMap[e.projectId] ?? "",
+        userDisplayName: e.userDisplayName || "Unknown",
+      }));
+      const filters = [
+        projectIdFilter !== "all" ? `Project: ${projects?.find(p => p.id.toString() === projectIdFilter)?.name ?? projectIdFilter}` : "All projects",
+        userIdFilter !== "all" ? `Consultant: ${users?.find(u => u.clerkId === userIdFilter)?.displayName ?? userIdFilter}` : "All consultants",
+        dateFrom || dateTo ? `Period: ${dateFrom || "…"} – ${dateTo || "…"}` : "All dates",
+        groupBy !== "none" ? `Grouped by ${groupBy}` : "",
+      ].filter(Boolean).join("  ·  ");
+      const filename = `oikos-solar-time-entries${dateFrom || dateTo ? `-${dateFrom || ""}${dateTo ? `_${dateTo}` : ""}` : ""}.xlsx`;
+      await exportEntriesTable({
+        entries: rows,
+        groupBy,
+        title: "oikos Solar – Time Entries",
+        subtitle: `${filters}  ·  exported ${format(new Date(), "yyyy-MM-dd HH:mm")}`,
+        filename,
+      });
+    } catch (err) {
+      toast({ title: "Export failed", description: err instanceof Error ? err.message : String(err), variant: "destructive" });
+    } finally {
+      setExporting(false);
+    }
   }
 
   return (
@@ -101,7 +119,7 @@ export function AdminTimeEntriesPage() {
           </div>
           <Button
             onClick={exportToExcel}
-            disabled={!entries || entries.length === 0}
+            disabled={exporting || !entries || entries.length === 0}
             className="gap-2 shrink-0"
             size="sm"
             data-testid="btn-export-excel"
